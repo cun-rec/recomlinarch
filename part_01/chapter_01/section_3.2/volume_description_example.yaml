@@ -1,0 +1,14 @@
+...
+docker_host:
+...
+  volumes:
+    - device: /dev/xvdf
+      block_device: True
+      directory: /mnt/recommind
+      fstype: xfs
+      options:
+        - bind
+      dump: 0
+      pass: 0
+      label: projects
+...

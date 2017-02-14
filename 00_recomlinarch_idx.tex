@@ -1,0 +1,54 @@
+% !TEX TS-program = pdflatex
+% !TEX encoding = UTF-8 Unicode
+
+% An alternative to the standard LaTeX letter class.
+
+\documentclass[fontsize=12pt, paper=a4]{scrbook}
+\makeatletter\@addtoreset{chapter}{part}\makeatother%
+
+% Don't forget to read the KOMA-Script documentation, scrguien.pdf
+
+\usepackage[utf8]{inputenc}
+
+\setcounter{secnumdepth}{4}
+
+\usepackage{amssymb}
+
+%
+\usepackage{float}
+
+% tikz
+\usepackage{tikz}
+\usetikzlibrary{trees}
+
+% listings
+\usepackage{minted}
+
+\newcommand\relativepath{}
+\newcommand\relative[1]{\relativepath#1}
+
+% FIXME: correct the commands
+\newcommand\pod{POD}
+\newcommand\awsc{AWS console}
+\newcommand\aws{AWS}
+\newcommand\vadorc[1]{VADORC#1}
+\newcommand\rdp{RDP}
+\newcommand\awsstddevkey{Dev-US-East-1}
+\newcommand\rootuser{\emph{root}}
+\newcommand\git{git}
+\newcommand\axceleratepod{AxceleratePod}
+
+% minted
+\setminted[yaml]{linenos,frame=single,labelposition=bottomline}
+
+\begin{document}
+	\tableofcontents
+	\renewcommand\relativepath{part_00/}
+	\include{part_00/toc}
+	% Not nice!! We need a solution to overcome this drawback!
+	\renewcommand\relativepath{c:/documentation/recomlinarch/part_01/}
+	\include{part_01/toc}
+	\renewcommand\relativepath{c:/documentation/recomlinarch/part_02/}
+	\include{part_02/toc}
+	\listoflistings
+\end{document}

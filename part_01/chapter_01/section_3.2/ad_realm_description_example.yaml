@@ -1,0 +1,10 @@
+...
+docker_host:
+  ...
+  realm:
+    domain_admin: domain_admin
+    domain_admin_pw: domain_admin_pw
+    domain_name: domain_name
+    permitted_groups:
+    - permitted_groups
+...

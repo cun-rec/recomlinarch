@@ -1,0 +1,193 @@
+\chapter{\pod{} Orchestration}
+	\section{Introduction}
+	Each customer environment is organized in so called \pod{}s. A \pod{} is roughly a VPN where all the servers are located which are configured as the customer needs it. To create a \pod{} we need to login to a server which serves a specific role: The orchestration server. The orchestration server has installed a couple of (partially self-developed) software packages which we use to create, extend and terminate \pod{}s.
+	\section{Orchestration Server}
+	We do have several orchestration server. To get a list login to the \awsc{} and navigate to the service \emph{Instances}. Then filter the instances by \emph{VADORC}. Now you get a list of all orchestration server available. There are some orchestration server which are used by specific people and before using them you should contact at least those people and ask if the server can be used for your needs. This is very important as we do have a big drawback: Every orchestration server clones the orchestration repository and you typically work directly inside this repository and you need to do so as user \emph{root}. The consequence is that actions of multiple users at the same time are extremely dangerous. For example if user \mintinline{shell}{A} upgrades a \pod{} and user \mintinline{shell}{B} changes the branch of the orchestration repository to a different one of \mintinline{shell}{A} you can destroy \mintinline{shell}{A}'s \pod{} as his commands will be based on the changed repository. So it is crucial to make sure that no other orchestration process or user is working on that machine at the same time.
+
+           % FIXME: complete the list
+           Figure \ref{tab:p03:ch01:overview_orch_servers} shows a list of orchestration servers together the person or team they're reserved for and whom can be asked if the server is free to use.
+           \begin{table}[h]
+             \center
+             \caption{Overview of the orchestration servers and responsibility}
+             \begin{tabular}{| l | l | p{5cm} |}
+               \hline
+               \textbf{Instancename} & \textbf{Responsibility} & \textbf{Note} \\ \hline
+               \vadorc{05} & Benjamin Schiborr & Usually free to use. If unsure you also may ask jsr \\ \hline
+               \vadorc{06} & Nate & Usually used by Nate. But might be free to use for us too. Ask jsr if unsure. \\ \hline
+               \vadorc{07} & Team TS & \\ \hline
+             \end{tabular}
+             \label{tab:p03:ch01:overview_orch_servers}
+           \end{table}
+	\section{Working with the orchestration server}
+             \subsection{Login to the orchestration server}
+             Before we come to the filesystem layout and how we setup the orchestration server to be operational and start working we need to login to the orchestration server. To to so we need to use one of our jump hosts as the orchestration servers themselves are not accessible from outside. To be able to login into a jump host you have to have a working 2FA setup for your personal use.
+             Pick one of the jump hosts of the following list and use \rdp{} to login to the server. Remember to use the appropriate credentials depending on whether you are going to do your work in the production or the development environment.
+
+           Once your on the jump host start putty to login to the orchestration server of your choice. If the orchestration server of your choice is not already saved at your putty profile create it and make sure that you use the appropriate private key for login. The available private keys can be found in the putty's installation directory. The one you need to use is the \emph{\awsstddevkey}. You can use this key in putty by loading your session and navigate to \emph{Connection $\rightarrow$ SSH $\rightarrow$ Auth $\rightarrow$ Keys} and select the key from the putty installation directory. Once done save the session and start to login.
+           
+		\subsection{Setup the orchestration server}
+             Before we can start using the orchestration scripts we need to ensure that the orchestration docker service is running. The docker container for the orchestration service has the name \emph{orch}. Check that the orchestration service is running by executing the following command:
+         	\begin{minted}{shell}
+> docker ps | grep orch
+dc92f331d1ce        orchestration:latest   "/usr/local/bin/super"   
+    32 hours ago        Up 32 hours         ...   orch
+           	\end{minted}
+           If it is not running we need to start the orchestration docker service first. Before you do so ensure that you are \rootuser{}. You can request to get \rootuser{} by using your \emph{rmdevcloud2} credentials by executing the command
+             \begin{minted}{shell}
+user@rmdevcloud2.int@vadorc05:~$ sudo su
+[sudo] password for user@rmdevcloud2.int:
+root@vadorc05 /home/user@rmdevcloud2.int >
+           \end{minted}
+           Once done it is recommended to change the directory to \mintinline{shell}{/srv/orchestration/}. Here we find the orchestration base directory of the orchestration repository. It is the root where the base actions take place like changing the orchestration to the code base which you might need for your further actions. For example if you want to create a new \pod{} with a specific version you need to change the orchestration code base to exactly this version too.
+           
+           The next step would be to start the orchestration docker service with the command
+           \begin{minted}{shell}
+root@vadorc05 /home/user@rmdevcloud2.int > ./docker/initialize_docker.sh
+           \end{minted}
+           Wait for the docker container to come up. Once the command finishes we can test that the orchestration docker service works properly by executing
+           \begin{minted}{shell}
+root@vadorc05 /home/user@rmdevcloud2.int > salt '*' test.ping
+           \end{minted}
+           and verifying that the result does \emph{not} says that the command timed out. If you get a list of servers or the result that nothing could be found everything is ok even though if single servers does not respond to the ping (which might be expected as not every server is running).
+
+           If on the other hand the ping command tells you it timed out the orchestration docker service initialization failed (at the present time this can happen; we don't know why. There is ongoing work to stabalize this) and you need to repeat the step setting up the service by executing
+           \begin{minted}{shell}
+root@vadorc05 ... > docker stop orch && docker rm orch && \
+  ./docker/initialize_docker.sh
+           \end{minted}
+           Once again use the salt-command to check that the orchestraton docker service does work.
+
+	\section{The relation of the orchestration and axceleratepod repository}
+	Before we go forward explaining how to create or modify a \pod{} we want to address the relationship between the orchestration and axceleratepod repository. It is important to know that the orchestration repository actually does not contain the orchestrating code. It is more a facet which serves as a layer for configuration and which \emph{feeds} a specific version of the implementation of axceleratepod to orchestrate a \pod{}. As such the axceleratepod can be seen as a orchestration library which is used by the code orchestration code to create or modify a \pod{} with respect to a given configuration. It also specifies the software stack - i.e. the version of cg, ng etc. pp. - which is to be used within the pod.
+	
+	Nevertheless it does not suffice to just exchange the axceleratepod version. Also the orchestration code base needs to be conform to the axceleratepod version which is going to be used to orchestrate a \pod{}. The version control system to use here is \git{}. The branches for a release \mintinline{shell}{R} has the format \mintinline{shell}{releases/R} where \mintinline{shell}{R} is the software version to run inside the \pod{} (like \mintinline{shell}{5_10}).
+	
+	Before you change the branch of the orchestration repository to begin your work it is \emph{very} important to check first whether there is another user on the system working. As you need to be \rootuser{} on the system and since working with the orchestration means you're working directly on the orchestration repository system wide changing the branch of the repository while there is some ongoing orchestration process could result in a damanged \pod{}!
+	
+	Unfortunately it can be tedious to find out who is actually working on the system. You can try \mintinline{shell}{who} or \mintinline{shell}{users} to request which users are on the system. However if someone did not use his domain user login and did the login using the ubuntu user there is no direct way to determine whom is online. If unsure take a look at table  \ref{tab:p03:ch01:overview_orch_servers} and contact the contact person listet there.
+	
+	Once it is clear that you can use the server (if not you need to find another server which is free to use) you need to assume that the person who used the server previously did not left the repository in a clean state. To check if there are uncommitted changes type
+	\mintinline{shell}{git status}. If there are uncommitted changes you can just stash them (as we assume that you are free to use the orchestration server) using \mintinline{shell}{git stash}. Once done change the branch to the one you need like
+           \begin{minted}{shell}
+root@vadorc05 ... (git)-[releases/5_10] > git stash
+Saved working directory and index state WIP on releases/5_10: bac6908 
+  Changes small.yaml.
+HEAD is now at bac6908 Changes small.yaml.
+root@vadorc05 ... (git)-[releases/5_10] > git checkout your_branch
+Switched to branch `your_branch'
+root@vadorc05 ... (git)-[your_branch] >
+           \end{minted}
+	
+	\section{Creating a \pod{}}
+	We assume that our working directory is \mintinline{shell}{/srv/orchestration} and that we're \rootuser{} and that the server is free to use. If we know the software version we want to deploy the only thing left is to specify how the \pod{} is going look like, i.e. which servers and how many of them we want to instantiate. To specify this there is a yaml-configuration file which lists each server type we want to instantiate and how many of those servers we want to have.
+	
+	There are planty of those files. But to keep it simple and as long as we cannot just specify an own file (which is in progress at the present time) we just need to edit \mintinline{shell}{/srv/orchestration/puppet/environments/development/hiera/06_size/small.yaml} an example of the is given in listing \ref{lst:p03:ch01:orchestration}
+	\begin{listing}[H]
+		\caption{A sample pod instance description}
+		\label{lst:p03:ch01:orchestration}
+		\inputminted{yaml}{\relative{chapter_00/section_1.4/pod_instance_description.yaml}}
+	\end{listing}
+	As you can see here our pod would consist of one master-service server, one ingestion server as well as one axcelerate server based on Linux as well as one nas and database server. We could list every other instance type with count equal to $0$ but we kept the file as small as possible. Table \ref{tab:p03:ch01:instance_types} gives an overview over every instance type you might want to specify here:
+	\begin{table}[h]
+         \center
+         \caption{Available instance types}
+         \begin{tabular}{| l | l | l |}
+           \hline
+           \textbf{Instance type} & \textbf{Remark} \\ \hline
+           master & The master service instance. Platform: Windows \\ \hline
+           batch\_asg & A batch auto scaling instance \\ \hline
+           crawler & A Windows based crawler instance \\ \hline
+           app & An instance for service and web tier \\ \hline
+           ingestion & A Windows based ingestion instance \\ \hline
+           ingestion\_linux & A Linux based ingestion instance \\ \hline
+           axcelerate & A Windows based axcelerate instance \\ \hline
+           axcelerate\_linux & A Linux based axcelerate instance \\ \hline
+           nas & A Windows file sharing instance \\ \hline
+           admin & A Windows based instance holding the admin application \\ \hline
+           db & NG db service as \aws{} service \\ \hline
+         \end{tabular}
+         \label{tab:p03:ch01:instance_types}
+      \end{table}
+	
+	Now configure you're \pod{} as you need it. Once finished you start creating the \pod{} by executing
+	\begin{minted}{shell}
+root@vadorc05 ... (git)-[releases/5_10] > orchestration create 
+  -T pod_env -I tenant -P pod_id -R region -A account_number --costcenter 
+  user@opentext.com --version version
+	\end{minted}
+	where the arguments do have the following meaning:
+	\begin{description}
+		\item[-T] Specifies the \emph{environment} of the \pod{}. See table \ref{tab:p03:ch01:pod_envs} for a list of available arguments.
+		\item[-I] Specifies the \emph{tenant id} for which the \pod{} is to be created. Note: You cannot choose a abitrary value here. The tenant id needs to be existent in the launchpad. If you need a new one someone from Infrastructure or QA Tooling might be able to help you creating a new one.
+		\item[-P] Specifies the \emph{\pod{} id}. If you need multiple \pod{}s for one tenant you can enumerate the \pod{}s through this parameter.
+		\item[-R] Specifies the \aws{} region where the \pod{} is to be created. Usually it is \emph{us-east-1}.
+		\item[-A] Specifies the \aws{} account which is used to create the \pod{}. See table \ref{tab:p03:ch01:aws_account_nums} for a list of accounts which can be used here.
+		\item[--costcenter] Specifies the cost center. Usually the email of the person or team who created/modified the \pod{}.
+		\item[--version] Specifies the product version which shall be deployed onto the instances of the \pod{}. The version you can specify here is the \axceleratepod{} version which contains the software distribution (core-version, ng-version, ami-id to use for the instances etc. pp.) and needs to be existent. Usually you will choose a released software version like in the example (we use the ng-versioning here; not core-versioning). How this relates to custom version testing see chapter \ref{p03:ch02:pod_testing}
+	\end{description}
+	\begin{table}[h]
+         \center
+         \caption{\aws{} Environment parameters}
+         \begin{tabular}{| l | l |}
+           \hline
+           \textbf{Paramter name} & \textbf{Remark} \\ \hline
+           development & \\ \hline
+           staging & Technically this is a production environment \\ \hline
+           production & \\ \hline
+         \end{tabular}
+         \label{tab:p03:ch01:pod_envs}
+      \end{table}
+	\begin{table}[h]
+         \center
+         \caption{\aws{} Account numbers}
+         \begin{tabular}{| l | l | l |}
+           \hline
+           \textbf{Account number} & \textbf{Target} & \textbf{Domain to use to login into instances} \\ \hline
+           710991980648 & Development account  & rmdevcloud2.int \\ \hline
+           569599628740 & Production account &  rmcloud; needs 2FA\\ \hline
+         \end{tabular}
+         \label{tab:p03:ch01:aws_account_nums}
+      \end{table}
+	
+	\section{Adding an instance to a \pod{}}
+	Adding a new instance uses almost the same parameters like creating a pod. There is one more parameter \mintinline{shell}{--scale_role}
+	which expects an instance type as its argument which we want to add to the \pod{}:
+	\begin{minted}{shell}
+root@vadorc05 ... (git)-[releases/5_10] > orchestration add --scale_role
+   instance_type -I tenant -P pod_id -R region -A account_number 
+   --costcenter user@opentext.com --version version
+	\end{minted}
+	The instance type is one of the table \ref{tab:p03:ch01:instance_types}.
+
+	\section{Terminating a \pod{}}
+	We can terminate a whole \pod{} by using the command
+	\begin{minted}{shell}
+root@vadorc05 ... (git)-[releases/5_10] > orchestration terminate 
+  -I tenant -P pod_id -R region -A account_number --costcenter 
+  user@opentext.com --version version
+	\end{minted}
+	
+	\section{Start and stop a \pod{}}
+	Starting and stopping a whole \pod{} can also be done via the orchestration:
+	\begin{minted}{shell}
+root@vadorc05 ... (git)-[releases/5_10] > orchestration start/stop 
+  -I tenant -P pod_id -R region -A account_number --costcenter 
+  user@opentext.com --version version
+	\end{minted}
+
+%	\begin{description}
+%		\item[add] Adds an instance to a specified \pod{}. Use the parameter \emph{--scale\_role} followed by an instance type from . The rest of the parameters are the same as shown in the last section.
+%		\item[clone]
+%		\item[recovery]
+%		\item[snapshot]
+%		\item[update]
+%		\item[terminate] Terminates a pod. The rest of the arguments are the same as 
+%		\item[tag]
+%		\item[rollback]
+%		\item[reinstantiate]
+%		\item[stop]
+%		\item[configure]
+%		\item[state]
+%		\item[migrate]
+%		\item[patch]
+%	\end{description}

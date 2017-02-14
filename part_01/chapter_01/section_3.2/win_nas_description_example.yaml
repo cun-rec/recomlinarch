@@ -1,0 +1,9 @@
+...
+docker_host:
+...
+  win_nas:
+    mount_point: /srv/nas
+    password: domain_admin_pw
+    user: domain_admin
+    unc_path: //nas_projects_share/projects
+...

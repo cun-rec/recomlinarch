@@ -1,0 +1,11 @@
+pod::instances:
+       master:
+         count: 1
+       ingestion_linux:
+         count: 1
+       axcelerate_linux:
+         count: 1
+       nas:
+         count: 1
+       db:
+         count: 1
