@@ -168,24 +168,22 @@ root@vadorc05 ... (git)-[releases/5_10] > orchestration terminate
 	\end{minted}
 	
 	\section{Start and stop a \pod{}}
-	Starting and stopping a whole \pod{} can also be done via the orchestration:
+	To start and stop the services running on the instances of a \pod{} you can use the following command:
 	\begin{minted}{shell}
 root@vadorc05 ... (git)-[releases/5_10] > orchestration start/stop 
   -I tenant -P pod_id -R region -A account_number --costcenter 
   user@opentext.com --version version
 	\end{minted}
+	If you stop a \pod{} you can use the optional parameter \mintinline{shell}{--stop_instances} to also stop the instances as well.
 
 %	\begin{description}
-%		\item[add] Adds an instance to a specified \pod{}. Use the parameter \emph{--scale\_role} followed by an instance type from . The rest of the parameters are the same as shown in the last section.
 %		\item[clone]
 %		\item[recovery]
 %		\item[snapshot]
 %		\item[update]
-%		\item[terminate] Terminates a pod. The rest of the arguments are the same as 
 %		\item[tag]
 %		\item[rollback]
 %		\item[reinstantiate]
-%		\item[stop]
 %		\item[configure]
 %		\item[state]
 %		\item[migrate]
