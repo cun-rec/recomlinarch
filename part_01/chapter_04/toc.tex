@@ -2,12 +2,30 @@
 	\section{A short introduction to docker}
 		\subsection{What is docker}
 		Docker is a technology to containerize software applications together with their dependencies into a complete environment and thus isolating them from other processes. As such the docker hosts environment does not need to be poluted by software installations and configurations. It makes it very easy to deploy a software as everything needed to run the software is contained within the container. From a technological point of view docker uses the Linux kernel techniques like cgroups to limit the set of resources the encapsulated environment is able to access.
-		\subsection{Docker description files}
 		\subsection{Images and Containers}
+		Before we can run containers containing our software we first need to build a docker image. From that image a container can be instantiated which then runs everything we described in the environment we configured during image creation.
+		\subsection{Docker description files}
+		To create an image we use a \emph{\dockerfile{}} which describes how our environment looks like. For example if we would like to run an ssh daemon within a docker container (although it might not has much sense as you only can login \emph{into} the container not the host) a minimal \dockerfile{} would look like this:
+		\begin{listing}[H]
+			\caption{A sample \dockerfile{}}
+			\label{lst:p01:ch05:sample_dockerfile}
+			\inputminted{text}{\relative{chapter_04/section_5.1.2/Dockerfile}}
+		\end{listing}
+		\begin{itemize}
+			\item[FROM] The \mintinline{text}{FROM} instruction tells us on what image the new one is based on (we don't create images from scratch thus we don't need to deal with creating a ``root'' image). Here it is based on an image with a minimal ubuntu 16.04 environment. 
+			\item[RUN] The next \mintinline{text}{RUN} statement executes the commands which follow the instruction during the image build process. Here we update the package list, install the latest fixes, install the openssh server and finally create the pid-file location for the ssh daemon. In the second \mintinline{text}{RUN} statement we change the password for \rootuser{} to be \rootuser{} (this is a lightweight example not accounting for security. Never ever do this; this description is based on a minimal example for creating a horneypot and for that purpose it was desired to make the break into the system for an intruder as easy as possible).
+			\item[EXPOSE] This statement will ensure that the port following to the instruction is exposed to the docker host. Remember that docker is a container-technology which isolates the environment we encapsulate. By default this also means that the ports used within the container are not exposed to the outside world.
+			\item[CMD] This statement defines the command which shall be executed once the we run the image. In our case here we want the ssh daemon to start.
+		\end{itemize}
+
 		\subsection{Repositories}
+		A repository is a location or endpoint an image is put into. This can be local as well as a remote endpoint. For better organization images we can be tagged/labeld. If not specified the default tag ist \mintinline{text}{latest}.
 		\subsection{The most relevant docker commands}
-			\subsubsection{\texttt{docker build}}
+		The docker container system is very complex. However most of the time the set of commands you will need to deal with is small. The in our opinion most relevant commands will be described here.
 			\subsubsection{\texttt{docker images}}
+			\mintinline{text}{docker images} gives us just a list of every image in our system.
+			\subsubsection{\texttt{docker build}}
+			
 			\subsubsection{\texttt{docker run}}
 			\subsubsection{\texttt{docker ps}}
 			\subsubsection{\texttt{docker rm} and \texttt{docker rmi}}
