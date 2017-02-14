@@ -1,1 +1,93 @@
 \chapter{The Linux container environment (CORE-installation)}
+	\section{Filesystem layout of the engine Docker container}
+	We find the following filesystem hierarchy within the engine docker container:
+	
+	\tikzstyle{every node}=[draw=black,thick,anchor=west]
+	\tikzstyle{selected}=[draw=red,fill=red!30]
+	\tikzstyle{optional}=[dashed,fill=gray!50]
+	\begin{tikzpicture}[
+		grow via three points={one child at (0.5,-0.7) and two children at (0.5,-0.7) and (0.5,-1.4)},
+		edge from parent path={(\tikzparentnode.south) |- (\tikzchildnode.west)}]
+		\node(root) {/}
+			child { node {srv}
+				child { node {migration}}
+				child { node {recommind}
+					child { node {bootup}}
+					child { node {projects}}
+				}
+				child [missing] {}
+				child [missing] {}
+				child { node {tmp}}
+			}
+			child [missing] {}
+			child [missing] {}
+			child [missing] {}
+			child [missing] {}
+			child [missing] {}
+			child { node {opt}
+				child { node {recommind}
+					child { node {bootup}}
+				}
+			}
+			child [missing] {}
+			child [missing] {}
+			child { node {etc}}
+			child { node {var}}
+			child { node {WINDOWS-NAS-NAME}};
+	\end{tikzpicture}
+	
+	The directories \emph{/srv/recommind}, \emph{/srv/migration} as well as the \emph{/WINDOWS-NAS-NAME} are shared between the Linux host and the docker container as mentioned in chapter \ref{p01:ch021} on page \pageref{p01:ch021} already.
+	\section{Setting up CORE docker containers}
+	In chapter \ref{p01:ch1} we mentioned the build pipeline. Now we describe the CORE installation procedure in more detail.
+			\subsubsection{Docker image types}
+			First we treat the different CORE docker image types and their responsibilities. The different docker image files are located at \emph{integration/docker} in the CORE repository:
+						
+			\tikzstyle{every node}=[draw=black,thick,anchor=west]
+			\tikzstyle{selected}=[draw=red,fill=red!30]
+			\tikzstyle{optional}=[dashed,fill=gray!50]
+			\begin{tikzpicture}[
+				grow via three points={one child at (0.5,-0.7) and two children at (0.5,-0.7) and (0.5,-1.4)},
+				edge from parent path={(\tikzparentnode.south) |- (\tikzchildnode.west)}]
+				\node(root) {integration}
+					child { node {docker}
+						child { node {build}}
+						child { node {deployment\_baseengine}
+							child { node {ubuntu}
+								child { node {install}}
+							}
+						}
+						child [missing] {}
+						child [missing] {}
+						child { node {deployment\_ingestionengine}
+							child { node {ubuntu}
+								child { node {install}}
+							}
+						}
+						child [missing] {}
+						child [missing] {}
+						child { node {deployment\_reviewengine}
+							child { node {ubuntu}
+								child { node {install}}
+							}
+						}
+						child [missing] {}
+						child [missing] {}
+						child { node {test}
+							child { node {ubuntu}
+								child { node {install}}
+								child { node {execution}}
+							}
+						}
+					};
+			\end{tikzpicture}
+
+			Those files are used to build the docker images. As there are dependencies between the different images we have to ensure that the necessary parent images exist before we build any image. As described in chapter \ref{p01:ch5} the \emph{build} docker image is based on \emph{build\_base} which doesn't live in the CORE repository. The same applies to \emph{deployment\_baseengine} which is a child of \emph{deployment\_base}. The CORE docker images have the following responsibility:
+			\begin{description}\sloppy
+				\item[build] The appropriate docker container is used for the build environment only. It provides the setup for the jenkins build job which performs the CORE java compile as part of the Ubuntu build.
+				\item[deployment\_baseengine] This is a child image of \emph{deployment\_base}. Its parent is a base image for of all application specific docker containers like App server, CORE and Pgbouncer. Those containers usually contain java applications and have their own bootup logic which is implemented in python. Therefore the parent docker image file contains installation instructions for java, python and the required python modules. Furthermore \emph{deployment\_base} defines the bootup location \emph{/opt/recommind/bootup} where the bootup scripts can be found as well as a docker entrypoint in order to trigger those scripts after container startup.
+				
+				\emph{deployment\_baseengine} in turn is a parent of different CORE containers. The docker image file includes installation instructions in order to install the CORE zip. There are some installation scripts located at \emph{/integration/docker/deployment\_baseengine/ubuntu/install} which are copied into the docker container and triggered as part of the docker image build.
+				\item[deployment\_ingestionengine]
+				\item[deployment\_reviewengine]
+				\item[test]
+			\end{description}

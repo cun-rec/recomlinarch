@@ -1,8 +1,8 @@
 \chapter{The Linux host environment}
 Before an engine can start up several configurations need to take place. Some of those configurations are made on the Linux host side and some
 within the engine docker container. In any case the bootloader is the instance which is responsible to setup the environment and put it in a well
-defined state such that the engine can funcation properly.
-	\section{Filesystem layout of the Linux host}
+defined state such that the engine can function properly.
+	\section{Filesystem layout of the Linux host}\label{p01:ch021}
 	The filesystem layout is oriented on the filesystem hierarchy standard (FHS). In \emph{/srv} we find the following hierarchy:
 	
 	\tikzstyle{every node}=[draw=black,thick,anchor=west]
@@ -51,14 +51,14 @@ defined state such that the engine can funcation properly.
 	We omit the presentation of directories which are not touched by us. As already said they follow the FHS. The other directories are maintained by us and contain the following contents.
 	\paragraph{/srv:} \emph{/srv} contains data which are persistent by services. In our environment this means:
 	\begin{description}
-		\item[docker] Here is where the docker service stores the docker images and containers. It is usually not of important to us although it might run out of disk if too many docker images and containers are pulled and spawned respectively. However on normal operation the bootloader shutdown scripts take care to remove any container spawned earlier. The bootloader startup scripts in turn take care to spawn new containers as specified in their respective configuration files.
-		\item[nas] In every POD a Windows-share server is being instantiated and which is used - for instance - to store production or csv exports. In order to give the engine process access to those server locations the POD specific Windows-share is mounted into this location and mapped into the engine container later on.
-		\item[migration] If an engine server is migrated from the Windows to the Linux environment orchestration takes care about attaching the "old" Windows drives to the Linux instance. If that is the case the bootloader detects the Windows drives and mounts them read-only into this location. The bootloader within the engine container - once started - checks if there is need to migrate the contents on this location to the new one.
-		\item[recommind] This is the location where everything is stored by our processes and which is being mapped into the engine container such that the engines do have access to it. The \emph{bootup} subdirectory contains the logfile produced by the bootloader which runs inside the engine container. If the engine container does not come up for what every reason this would be \textbf{the first place} to inspect to get an idea of what possibly went wrong during engine docker bootup. The \emph{pgbouncer} subdirectory is being used by the pgbouncer container. The bootloader on the host takes care such that the pgbouncer configuration is written to this directory. The \emph{projects} directory is our \emph{\$MINDSERVER\_PROJECTS} directory and contains every project plus the launcher service and processcontrol content. On the app-servers the \emph{axcng-web} and \emph{axcng-service} directory are located here too but should usually not of the concern of the index team.
-		\item[tmp] First: this location has \textbf{nothing} to do with the temp drive/directory of the Linux host. For engine servers dedicated temp-drives are created and attachted to the engine instance. Those drives are mount to this location and mapped into the docker container later on to provide a dedicated temp drive large enough to hold every temporary data the engine container comes up with. It is used by the container which is provided by the docker service thus it is located in \emph{/srv}.
+		\item[docker] Here is where the docker service stores the docker images and containers. It is usually not of importantce to us although it might run out of disk if too many docker images and containers are pulled and spawned respectively. However on normal operation the bootloader shutdown scripts take care to remove any container spawned earlier. The bootloader startup scripts in turn take care to spawn new containers as specified in their respective configuration files.
+		\item[nas] In every POD a Windows-share server is being instantiated and is used - for instance - to store production or CSV exports. In order to give the engine process access to those server locations the POD specific Windows-share is mounted into this location and mapped into the engine container later on.
+		\item[migration] If an engine server is being migrated from the Windows to the Linux environment orchestration takes care about attaching the "old" Windows drives to the Linux instance. If that is the case the bootloader detects the Windows drives and mounts them read-only into this location. The bootloader within the engine container - once started - checks if there is need to migrate the contents on this location to the new one.
+		\item[recommind] This is the location where everything is stored by our processes and which is being mapped into the engine container such that the engines do have access to it. The \emph{bootup} subdirectory contains the logfile produced by the bootloader which runs inside the engine container. If the engine container does not come up for what every reason this would be \textbf{the first place} to inspect to get an idea of what possibly went wrong during engine docker bootup. The \emph{pgbouncer} subdirectory is being used by the pgbouncer container for storing its bootup log files. The \emph{projects} directory is our \emph{\$MINDSERVER\_PROJECTS} directory and contains every project plus the launcher service and processcontrol content. On the app-servers the \emph{axcng-web} and \emph{axcng-service} directories are located here too but should usually not of the concern of the index team.
+		\item[tmp] First: this location has \textbf{nothing} to do with the temp drive/directory of the Linux host. For engine servers dedicated temp-drives are created and attachted to the engine instance. Those drives are mounted to this location and mapped into the docker container later on to provide a dedicated temp drive large enough to hold every temporary data the engine container comes up with. It is used by the container which is provided by the docker service thus it is located in \emph{/srv}.
 	\end{description}
 	
-	\paragraph{/opt:} contains the software packages which runs on the server. The only relervant one for the index team is located in the subdirectory \emph{recommind/bootup} which contains the bootloader which runs on the Linux host instance. Besides the bootloader itself it also contains the bootloader logfile(s) and is therefore the first place to take a look at when the Linux bootup procedure failed.
+	\paragraph{/opt:} contains the software packages which runs on the server. The only relervant one for the index team is located in the subdirectory \emph{recommind/bootup} which contains the bootloader which runs on the Linux host instance. Besides the bootloader itself it also contains the bootloader logfile(s) and is therefore the first place to take a look at when the Linux host bootup procedure failed.
 	
 	\paragraph{/etc:} is the directory containing host specific and system-wide configuration files. Relervant for the index team are here the subdirectories
 	\begin{description}
@@ -69,10 +69,10 @@ defined state such that the engine can funcation properly.
 	\paragraph{/var:} is the directory containing every variable - i.e. continually changed - files during system uptime. Most relevant for problem analysis is the subdirectory \emph{log} which contains several logfiles especially \emph{syslog} among the others which is the one of the logfiles to inspect if something went wrong during system startup but also during system uptime.
 	
 	\section{Bootloader system configuration}
-	The Linux host instances is being configured by the bootloader in various ways. Here we want to describe every phase in detail but omit the presentation of the phase specific source code. An detailed presentation of the Linux host bootloader source will be treated in chapter \ref{p01:ch08} on page \pageref{p01:ch08}.
+	The Linux host instances are being configured by the bootloader in various ways. Here we want to describe every phase in detail but omit the presentation of the phase specific source code. An detailed presentation of the Linux host bootloader source will be treated in chapter \ref{p01:ch08} on page \pageref{p01:ch08}.
 	
 		\subsection{\emph{bootup} phases}
-			The \emph{bootup} phase will run at every instance startup. To ensure that one of the phases creates \emph{systemd} unit-descriptions and places them to \emph{/etc/systemd}. The \emph{systemd} init process in turn ensures that every such uni-description is read and produces a \emph{systemd} service endpoint. It will then show up by the \emph{systemctl} Linux command and can be started, stopped, restarted and queried for its status with that command. When enabled every thus endpoint is automatically started (in a specified order) by the \emph{systemd} init process at system startup.
+			The \emph{bootup} phases will run at every instance startup. It's important that one of the phases creates \emph{systemd} unit-descriptions and places them to \emph{/etc/systemd}. The \emph{systemd} init process in turn ensures that every such unit-description is read and produces a \emph{systemd} service endpoint. It will then show up by the \emph{systemctl} Linux command and can be started, stopped, restarted and queried for its status with that command. When enabled every endpoint is automatically started (in a specified order) by the \emph{systemd} init process at system startup.
 			\subsubsection{prestart00}
 			This phase is responsible for the following configurations:
 			\begin{description}
@@ -84,9 +84,9 @@ defined state such that the engine can funcation properly.
 				\end{listing}
 				This description is a 1:1 mapping as it would appear in the \emph{/etc/fstab} file.
 			
-				The \emph{block\_device} member tells us whether we're dealing with a block device. It is usually always true in the 			production environment but not necessarily in development or staging. For testing purposes it is possible to not specify this member or set it to \emph{False} and use some regular directory on disk and perform a bind-mount into another directory. For such volumes no volume setup is performed as it is already mounted.
+				The \emph{block\_device} member tells us whether we're dealing with a block device. It is usually always true in the 			production environment but not necessarily in development or staging. For testing purposes it is possible to not specify this member or set it to \emph{False} and use some regular directory on disk and perform a bind-mount into another directory. For such volumes no volume setup is performed as it is already formated.
 			
-				On the Linux host every volume which can be configured via the host yaml configuration file - except for the swap filesystems - will be put under control of the \emph{logical volume manager (lvm)}. The lvm allows us to define one volume consisting of several devices and which is of size equal to the sum of all those devices size. To structure thus logical volumes the set of devices form a \emph{group} for which we have to specify a \emph{group name} as an identifier. Once that is done we can assign this group to a \emph{logical volume}.
+				On the Linux host every volume which can be configured via the host yaml configuration file - except for the swap filesystems - will be put under control of the \emph{logical volume manager (lvm)}. The lvm allows us to define one volume consisting of several devices and which is of size equal to the sum of all those devices size. To structure those logical volumes the set of devices form a \emph{group} for which we have to specify a \emph{group name} as an identifier. Once that is done we can assign this group to a \emph{logical volume}.
 			 
 				If multiple devices are configured for the same mount point its \emph{dirname} of the mount point specified by \emph{directory} defines the \emph{group name} the described device belongs to and the \emph{label} defines the \emph{logical volume} where the group will be assigned to.
 			
@@ -94,8 +94,30 @@ defined state such that the engine can funcation properly.
 				\begin{itemize}
 					\item seperate block devices from non-block devices
 					\item import logical volumes which are already present
-					\item create all volumes which are not already configured, put all devices into their respective volume groups and extend the the size of all logical volume by the sum of the newly free available size defined by every new device which was put into a volume group thats affecting those logical volumes. This is only performed on the set of block devices.
+					\item create all volumes which are not already configured, put all devices into their respective volume groups and extend the the size of all logical volume by the sum of the newly free available size defined by every new device which has been put into a volume group that's affecting those logical volumes. This is only performed on the set of block devices.
 				\end{itemize}
+			
+				\item[Logfile retention] Only relevant for app- and service-tier.
+				\item[Lifecycle hook registration] Only relevant for app- and service-tier.
+
+				\item[Initialization of environment variables] Here every defined environment variable needed is put into \emph{/etc/environment}. The code always needs to know which environment variables shall make it into the system. There is no generalization mechanism. This also gives no place to inject unwanted environment variables. At the present time the configuration looks like this:
+				\begin{listing}[H]
+					\caption{A sample env var describtion}
+					\label{lst:p01:ch01:linhost_env_var_descr}
+					\inputminted{yaml}{\relative{chapter_01/section_3.2/env_var_description_example.yaml}}
+				\end{listing}
+			\end{description}
+
+			\subsubsection{prestart01}
+			This phase is responsible for the following configuration:
+			\begin{description}
+				\item[Migration volume setup] During the migration of the Windows engine environment to the Linux engine environment we need to copy over the projects from a ntfs drive to the new Linux (xfs) drive. A usual setup in the Windows environment consists of multiple disks which are configured into a logcial volume, named \emph{spanned volume}, which provides a single disk of size of the sum of all disks which were specified to form the spanned volume.
+			
+			In the Linux environment the tool \emph{ldmtool} allows us to scan for such volumes and to create a device node for such a spanned volume in \emph{/dev/mapper} and which looks like \emph{ldm\_vol\_WIN-JF1F8KQJAPA-Dg0\_Volume}.
+			
+			During migration volume setup the bootloader tries to identify a single ntfs or a spanned volume and mounts it into \emph{/srv/migration}. It fails in case there is more than one such volume detected as in this case the bootloader does not know which one to setup for migration.
+			
+			There is no Linux host configuration option needed for this. If the migration volume is not present the starting engine docker container knows that there is nothing to migrate.
 			
 				\item[Active Directory join] Every Linux engine is put into an active directory via \emph{sssd}. During AD join the relevant configuration options are read which specifies the \emph{realm}, \emph{user} - which is allowed to perform the join -, \emph{password} as well as the AD \emph{permitted groups} which are permitted to login to the Linux instance using their AD credentials.
 				\begin{listing}[H]
@@ -103,28 +125,7 @@ defined state such that the engine can funcation properly.
 					\label{lst:p01:ch01:linhost_ad_realm_descr}
 					\inputminted{yaml}{\relative{chapter_01/section_3.2/ad_realm_description_example.yaml}}
 				\end{listing}
-			
-				\item[Logfile retention] Only relevant for app- and service-tier.
-				\item[Lifecycle hook registration] Only relevant for app- and service-tier.
-			\end{description}
 
-			\subsubsection{prestart01}
-			This phase is responsible for the following configuration:
-			\begin{description}
-				\item[Migration volume setup] During the migration of the Windows engine environment to the Linux engine environment we need to copy over the projects from a ntfs drive to the new Linux (xfs) drive. A usual setup in the Windows environment consists of  multiple disk which are configured into a logcial volume, named \emph{spanned volume}, and which provides a single disk of size of the sum of all disk which were specified to form the spanned volume.
-			
-			In the Linux environment the tool \emph{ldmtool} allows us to scan for such volumes and to create a device node for such a spanned volume in \emph{/dev/mapper} and which looks like \emph{ldm\_vol\_WIN-JF1F8KQJAPA-Dg0\_Volume}.
-			
-			During migration volume setup the bootloader tries to identifies a single ntfs or a spanned volume and mounts it into \emph{/srv/migration}. It fails in case there is more than one such volume detected as in this case the bootloader does not know which one to setup for migration.
-			
-			There is no Linux host configuration option needed for this. If the migration volume is not present the starting engine docker container knows that there is nothing to migrate.
-			
-				\item[Initialization of environment variables] Here every defined environment variable needed is put into \emph{/etc/environment}. The code always needs to know which environment variables shall make it into the system. There is no generalization mechanism. This also gives no place to inject unwanted environment variables. At the present time the configuration looks like this:
-				\begin{listing}[H]
-					\caption{A sample env var describtion}
-					\label{lst:p01:ch01:linhost_env_var_descr}
-					\inputminted{yaml}{\relative{chapter_01/section_3.2/env_var_description_example.yaml}}
-				\end{listing}
 			\end{description}
 			
 			\subsubsection{prestart10}
@@ -139,7 +140,7 @@ defined state such that the engine can funcation properly.
 				The configuration specifies the AD user and password which is allowed to mount the nas into the system as well as the UNC path to the nas endpoint to be mounted.
 				
 				If - for whatever reason - the nas cannot be mounted into the system the mount point gets protected against write access via \emph{chattr} and \emph{chmod} to ensure that no process of the engine docker container is able to write to this location. This is to ensure that we do not loos whatever data should be written to that location. If we would allow to write into the engine docker containers nas location without the nas properly mounted into the system those data would only reside on the Linux host but would never be copied into the nas location. Assume that would be the case those data will be lost in case of an upgrade or patch process because those processes are designed to throw away the hole instance and create a new one as desired.
-				
+
 				\item[Mount of (other) volumes] Here every volume configured earlier in \emph{prestart00} is added to \emph{/etc/fstab} - if not already present - and mounted into the system to their respective mount points. 
 				
 				There is a special situation concerning the migration volume. The ntfs device driver implements the \emph{fuse (filesystem userspace)} api and thus resides in the userspace and not in the kernelspace. However as such it cannot be kept alive after the bootloader process lifetime ends and the init process is established. As there is no such parent process during system initialization the ntfs-3g device driver process cannot be inherited by the parent process of the terminated bootloader process. Hence the ntfs-3g terminates too and unmounts the Windows volume again. To be able to mount the Windows volume automatically the \emph{x-systemd.automount,nofail} option is set for this device forcing the systemd mount capability to mount our Windows volume automatically later on. This however forces us to implement in the engine container bootup some wait time to give the systemd service on Linux host side some time to trigger the mount.
@@ -148,16 +149,35 @@ defined state such that the engine can funcation properly.
 			\subsubsection{prestart50}
 			Besides several configuration steps concerning filesystem setup and the embedding of external resources into the system (like the Windows share) we do also need to configure a set of additional agent and server processes on the Linux host to fullfil the requirement of exposing monitoring and directory shared information to other endpoints in the AWS environment. Those additional services and their configuration will now be explained.
 			\begin{description}
-				\item[pgbouncer configuration]
-				\item[smb server configuration]
-				\item[systemd unit description installation]
-				\item[splunk config removal]
-				\item[docker configuration update]
+				\item[smb server configuration] Writes a smb configuration file to \emph{/etc/samba/smb.conf}, joins the server to the domain and restarts the smb server.
+				\item[systemd unit description installation] Writes a \emph{systemd} environment file to \emph{/etc/default/recommind-bootup}. This file contains the recommind specific bootup environment variable and its bootup options. These options are consumed by a second file which is written to \emph{/etc/systemd/system/recommind-bootup.service}. It contains the appropriate \emph{systemd} unit description.
+				\item[splunk config removal] Creates backups of the splunk input and JMX configuration files before removing those files from the system.
+				\item[docker configuration update] Writes a docker configuration file to \emph{/etc/default/docker}. This file is used to set docker options and HTTP(S) proxies. The docker service will be restarted to apply the changes.
 			\end{description}
 			
 			\subsubsection{prestart51}
+			In this phase we write the shutdown specfic \emph{systemd} units. I consists of the following scripts:
+			\begin{description}
+				\sloppy
+				\item[systemd unit description installation] Writes a \emph{systemd} environment file to \emph{/etc/default/recommind-shutdown}. This file contains the recommind specific shutdown environment variable and its shutdown options. These options are consumed by a second file which is written to \emph{/etc/systemd/system/recommind-shutdown.service}. It contains the appropriate \emph{systemd} unit description.
+			\end{description}
 			\subsubsection{start50}
+			If all prestart phases have been executed successfully we can execute the necessary startup scripts:
+			\begin{description}
+				\item[start docker containers] Iterates over all docker containers which have to be startet. The appropriate docker images are defined by the host configuration file and will be pulled from AWS S3. Listing \ref{lst:p01:ch01:linhost_docker_image_descr} shows an example of a CORE docker image.
+				\begin{listing}[H]
+					\caption{A sample docker image describtion}
+					\label{lst:p01:ch01:linhost_docker_image_descr}
+					\inputminted{yaml}{\relative{chapter_01/section_3.2/docker_image_description_example.yaml}}
+				\end{listing}
+				The docker image section may consist of multiple subsections. The \emph{arguments} subsection can be used to specify an AWS S3 location were a yaml configuration file is located. This is needed for all docker containers which have own bootup phases. The docker container network configuration is defined by the \emph{network} key. The value is generally \emph{host} as we use RMI connections and don't want to handle port forwarding manually. Both the \emph{repository} and \emph{tag} keys provide the necessary information to pull the docker image from S3. Some directories have to be shared between the docker host and its docker containers. The \emph{volumes} section can consist of multiple docker host directories and the desired mount points for the docker container. The \emph{options} key can be used to pass additional options for the docker container data volume (e.g. read-only permission). Usually, we don't need those options in this context.
+			\end{description}
 			\subsubsection{poststart50}
+			Since all docker containers are up and running we can perform the following poststart scripts:
+			\begin{description}
+				\item[start nagios] 
+				\item[start splunk] 
+			\end{description}
 		\subsection{\emph{shutdown} phases}
 			\subsubsection{stop50}
 			\subsubsection{poststop49}
