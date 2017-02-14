@@ -1,6 +1,7 @@
 \chapter{The docker architecture}\label{p01:ch5}
 	\section{A short introduction to docker}
 		\subsection{What is docker}
+		Docker is a technology to containerize software applications together with their dependencies into a complete environment and thus isolating them from other processes. As such the docker hosts environment does not need to be poluted by software installations and configurations. It makes it very easy to deploy a software as everything needed to run the software is contained within the container. From a technological point of view docker uses the Linux kernel techniques like cgroups to limit the set of resources the encapsulated environment is able to access.
 		\subsection{Docker description files}
 		\subsection{Images and Containers}
 		\subsection{Repositories}
@@ -21,3 +22,4 @@
 		\subsection{The \texttt{deployment\_ingestionengine} repository}
 		\subsection{The \texttt{deployment\_reviewengine} repository}
 		\subsection{The \texttt{test} repository}
+		\subsection{The cg docker gradle tasks}
