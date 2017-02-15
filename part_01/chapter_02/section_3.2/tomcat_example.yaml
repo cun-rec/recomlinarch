@@ -1,0 +1,11 @@
+core:
+...
+tomcat:
+  customer: index
+  keystore:
+    alias: index_web_rm_ca
+    password: my_password
+  s3_location: https://s3.amazonaws.com/rec.saas.vadindex/certificates
+  truststore:
+    password: my_password
+...

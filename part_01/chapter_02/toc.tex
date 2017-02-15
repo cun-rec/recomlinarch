@@ -39,69 +39,115 @@
 	The directories \emph{/srv/recommind}, \emph{/srv/migration} as well as the \emph{/WINDOWS-NAS-NAME} are shared between the Linux host and the docker container as mentioned in chapter \ref{p01:ch021} on page \pageref{p01:ch021} already.
 	\section{Setting up CORE docker containers}
 	In chapter \ref{p01:ch1} we mentioned the build pipeline. Now we describe the CORE installation procedure in more detail.
-			\subsubsection{Docker image types}
-			First we treat the different CORE docker image types and their responsibilities. The different docker image files are located at \emph{integration/docker} in the CORE repository:
-						
-			\tikzstyle{every node}=[draw=black,thick,anchor=west]
-			\tikzstyle{selected}=[draw=red,fill=red!30]
-			\tikzstyle{optional}=[dashed,fill=gray!50]
-			\begin{tikzpicture}[
-				grow via three points={one child at (0.5,-0.7) and two children at (0.5,-0.7) and (0.5,-1.4)},
-				edge from parent path={(\tikzparentnode.south) |- (\tikzchildnode.west)}]
-				\node(root) {integration}
-					child { node {docker}
-						child { node {build}}
-						child { node {deployment\_baseengine}
-							child { node {ubuntu}
-								child { node {install}}
-							}
+		\subsection{Docker image types}
+		First we treat the different CORE docker image types and their responsibilities. The different docker image files are located at \emph{integration/docker} in the CORE repository:
+				
+		\tikzstyle{every node}=[draw=black,thick,anchor=west]
+		\tikzstyle{selected}=[draw=red,fill=red!30]
+		\tikzstyle{optional}=[dashed,fill=gray!50]
+		\begin{tikzpicture}[
+			grow via three points={one child at (0.5,-0.7) and two children at (0.5,-0.7) and (0.5,-1.4)},
+			edge from parent path={(\tikzparentnode.south) |- (\tikzchildnode.west)}]
+			\node(root) {integration}
+				child { node {docker}
+					child { node {build}}
+					child { node {deployment\_baseengine}
+						child { node {ubuntu}
+							child { node {install}}
 						}
-						child [missing] {}
-						child [missing] {}
-						child { node {deployment\_ingestionengine}
-							child { node {ubuntu}
-								child { node {install}}
-							}
+					}
+					child [missing] {}
+					child [missing] {}
+					child { node {deployment\_ingestionengine}
+						child { node {ubuntu}
+							child { node {install}}
 						}
-						child [missing] {}
-						child [missing] {}
-						child { node {deployment\_reviewengine}
-							child { node {ubuntu}
-								child { node {install}}
-							}
+					}
+					child [missing] {}
+					child [missing] {}
+					child { node {deployment\_reviewengine}
+						child { node {ubuntu}
+							child { node {install}}
 						}
-						child [missing] {}
-						child [missing] {}
-						child { node {test}
-							child { node {ubuntu}
-								child { node {execution}}
-							}
+					}
+					child [missing] {}
+					child [missing] {}
+					child { node {test}
+						child { node {ubuntu}
+							child { node {execution}}
 						}
-					};
-			\end{tikzpicture}
+					}
+				};
+		\end{tikzpicture}
 
-			Those files are used to build the docker images. As there are dependencies between the different images we have to ensure that the necessary parent images exist before we build any image. As described in chapter \ref{p01:ch5} the \emph{build} docker image is based on \emph{build\_base} which doesn't live in the CORE repository. The same applies to \emph{deployment\_baseengine} which is a child of \emph{deployment\_base}. The CORE docker images have the following responsibility:
-			\begin{description}\sloppy
-				\item[build] The appropriate docker container is used for the build environment only. It provides the setup for the jenkins build job which performs the CORE java compile as part of the Ubuntu build.
-				\item[deployment\_baseengine] This is a child image of \emph{deployment\_base}. Its parent is a base image for of all application specific docker containers like App server, CORE and Pgbouncer. Those containers usually contain java applications and have their own bootup logic which is implemented in python. Therefore the parent docker image file contains installation instructions for java, python and the required python modules. Furthermore \emph{deployment\_base} defines the bootup location \emph{/opt/recommind/bootup} where the bootup scripts can be found as well as a docker entrypoint in order to trigger those scripts after container startup.
+		Those files are used to build the docker images. As there are dependencies between the different images we have to ensure that the necessary parent images exist before we build any image. As described in chapter \ref{p01:ch5} the \emph{build} docker image is based on \emph{build\_base} which doesn't live in the CORE repository. The same applies to \emph{deployment\_baseengine} which is a child of \emph{deployment\_base}. The CORE docker images have the following responsibility:
+		\begin{description}\sloppy
+			\item[build] The appropriate docker container is used for the build environment only. It provides the setup for the jenkins build job which performs the CORE java compile as part of the Ubuntu build.
+			\item[deployment\_baseengine] This is a child image of \emph{deployment\_base}. Its parent is a base image for of all application specific docker containers like App server, CORE and Pgbouncer. Those containers usually contain java applications and have their own bootup logic which is implemented in python. Therefore the parent docker image file contains installation instructions for java, python and the required python modules. Furthermore \emph{deployment\_base} defines the bootup location \emph{/opt/recommind/bootup} where the bootup scripts can be found as well as a docker entrypoint in order to trigger those scripts after container startup.
+			
+			\emph{deployment\_baseengine} in turn is a parent of different CORE containers. The docker image file includes installation instructions in order to install the CORE zip. There are some installation scripts located at \emph{/integration/docker/deployment\_baseengine/ubuntu/install} which are copied into the docker container and triggered as part of the docker image build.
+			\item[deployment\_ingestionengine] This is a child image of \emph{deployment\_baseengine}. Its install script copies the \emph{configuration.system.properties} file to the bootup source directory. This file contains the \emph{ingestion} role name which is consumed by the CORE bootup procedure.
+			\item[deployment\_reviewengine] Same as mentioned in \emph{deployment\_ingestionengine} but we use the role \emph{reviewengine} and the install script installs the classic Axcelerate zip additionally.
+			\item[test] This is a child image of \emph{deployment\_reviewengine}. It is used to run Ubuntu gate tests on the jenkins build machine. The \emph{execution} folder contains a script which takes the following arguments:
+			\begin{itemize}
+				\item --force\_run\_all: Optional flag to force the execution of all test suits even in case of failing suites.
+				\item list of test suites: At least one gate test suit must be given. The paths are relative, e.g. \emph{gate/infrastructure/testsuite\_coreapi\_measures.xml}.
+			\end{itemize}
+			If any suite fails on the jenkins system, the \emph{mindserver-projects} folder will be archived and saved as \emph{mindserver-projects.zip} on \emph{laos} in an appropriate sub folder of \emph{.../CORE\_major\_minor/UbuntuGateTestLogs/build/distributions/test-output/...}. In addition we find a \emph{result.csv} file at this location which contains the failed suite names, the number of total tests per suite as well as the number of skipped and failed tests.
+			
+			Please note that the script consumes a \emph{TESTAGENT} zip file and the following environment variables:
+			\begin{itemize}
+				\item MINDSERVER\_HOME
+				\item MINDSERVER\_PROJECTS
+				\item JAVA\_HOME
+				\item TEST\_VOLUME: The location where the \emph{test-output} folder will be created. Furthermore the script expects the \emph{TESTAGENT} zip file here.
+			\end{itemize}
+		\end{description}
+		
+		\subsection{The CORE bootup phases}
+		In chapter \ref{p01:ch221} we treated the different bootup phases on the Linux host. The CORE docker container contains its own bootup phases for the CORE part. The appropriate python code is located at \emph{bootup/bootup} in the CORE repository and consists of the following Linux specific phases. We omit the phases used by the \emph{batch\_asg} or any other stuff:
+			
+			\subsubsection{prestart00}
+			\begin{description}
+				\item[setup directories]
+			\end{description}
+			\subsubsection{prestart50}
+			\begin{description}
+				\item[configurate base]
+				\item[configurate splunk]
+				\item[setup base]
+			\end{description}
+			\subsubsection{prestart60}
+			\begin{description}
+				\item[configurate base]
+				\item[setup launcherservice credentials]
+				\item[setup mindserver process configuration]
+			\end{description}
+			\subsubsection{start50}
+			\begin{description}
+				\item[start engine] After all \emph{prestart} phases have been executed successfully the launcher service process has to be started. As the sub process call may not block the following bootup phases this process has to run in the background.
+			\end{description}
+			\subsubsection{poststart50}
+			\subsubsection{poststart60}
+			\begin{description}
+				\item[configure tomcat] This script has two responsibilities. First it has to download a keystore from Amazon S3 which is used for new projects. Secondly we have to configure tomcat at the master service. These steps are only necessary for new projects or after a Linux migration. The appropriate tomcat parameters are configured by the following section of the CORE yaml file:
 				
-				\emph{deployment\_baseengine} in turn is a parent of different CORE containers. The docker image file includes installation instructions in order to install the CORE zip. There are some installation scripts located at \emph{/integration/docker/deployment\_baseengine/ubuntu/install} which are copied into the docker container and triggered as part of the docker image build.
-				\item[deployment\_ingestionengine] This is a child image of \emph{deployment\_baseengine}. Its install script copies the \emph{configuration.system.properties} file to the bootup source directory. This file contains the \emph{ingestion} role name which is consumed by the CORE bootup procedure.
-				\item[deployment\_reviewengine] Same as mentioned in \emph{deployment\_ingestionengine} but we use the role \emph{reviewengine} and the install script installs the classic Axcelerate zip additionally.
-				\item[test] This is a child image of \emph{deployment\_reviewengine}. It is used to run Ubuntu gate tests on the jenkins build machine. The \emph{execution} folder contains a script which takes the following arguments:
+				\begin{listing}[H]
+					\caption{Tomcat configuration}
+					\label{lst:p01:ch02:core_tomcat_desc}
+					\inputminted{yaml}{\relative{chapter_02/section_3.2/tomcat_example.yaml}}
+				\end{listing}
+				\item[fix windows paths] After a Linux migration we have to check all configuration fields for Windows specific paths which can be fixed automatically. The underlying CORE script needs master service access in order to iterate over those fields and to make configuration changes. The script fixes the following problems automatically:
 				\begin{itemize}
-					\item --force\_run\_all: Optional flag to force the execution of all test suits even in case of failing suites.
-					\item list of test suites: At least one gate test suit must be given. The paths are relative, e.g. \emph{gate/infrastructure/testsuite\_coreapi\_measures.xml}.
+					\item \emph{[A-Za-z]:\textbackslash Projects} will be changed to \emph{/srv/recommind/projects}
+					\item \emph{[A-Za-z]:\textbackslash Storage} will be changed to \emph{/srv/recommind/storage}
+					\item \emph{..\textbackslash Storage} will be changed to \emph{/srv/recommind/storage}
+					\item \emph{\textbackslash \textbackslash Fileshare} will be changed to \emph{/Fileshare}. Note that we mount the known Windows file share to the root of the docker container.
 				\end{itemize}
-				If any suite fails on the jenkins system, the \emph{mindserver-projects} folder will be archived and saved as \emph{mindserver-projects.zip} on \emph{laos} in an appropriate sub folder of \emph{.../CORE\_major\_minor/UbuntuGateTestLogs/build/distributions/test-output/...}. In addition we find a \emph{result.csv} file at this location which contains the failed suite names, the number of total tests per suite as well as the number of skipped and failed tests.
-				
-				Please note that the script consumes a \emph{TESTAGENT} zip file and the following environment variables:
-				\begin{itemize}
-					\item MINDSERVER\_HOME
-					\item MINDSERVER\_PROJECTS
-					\item JAVA\_HOME
-					\item TEST\_VOLUME: The location where the \emph{test-output} folder will be created. Furthermore the script expects the \emph{TESTAGENT} zip file here.
-				\end{itemize}
+				\item[register pgbouncer]
+			\end{description}
+			\subsubsection{poststart70}
+			\begin{description}
+				\item[waitforlauncherservice] In the \emph{start} phase we've started the launcher service process. As this process runs in background we have to ensure that the docker container doesn't stop after the last bootup phase. The wait script blocks the last bootup phase until the launcher service process is finished. It gets the process information from the \emph{start} phase. Please make sure that this script lives in its own and last \emph{poststart phase}. If there are other scripts in the same phase, the bootloader won't be able to report errors of those scripts even thought all scripts within the same phase are executed in parallel. Please also note that any following bootup phases wouldn't be executed at all.
 			\end{description}
 			
-			\subsubsection{The CORE bootup phases}

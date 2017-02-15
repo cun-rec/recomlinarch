@@ -7,7 +7,7 @@ docker_host:
       directory: /mnt/recommind
       fstype: xfs
       options:
-        - no-auto
+        - noauto
       dump: 0
       pass: 0
       label: projects
