@@ -66,9 +66,50 @@
 				\label{lst:p01:ch05:run_image}
 				\inputminted{text}{\relative{chapter_04/section_5.1.2/run_image.lst}}
 			\end{listing}
+			When we run the image in dettach-mode the return value of the command is the id of the spawned container. Listing the running container processes confirms that we indeed launched a container from the image: just compare the used image id.
+			\subsubsection{\mintinline{text}{docker stop} and \mintinline{text}{docker start}}
+			We can start and stop containers using \mintinline{text}{docker start} and \mintinline{text}{docker stop} respectively. As each container gets a name as a synonym we can either specify the container by name or by its id. If we did not spawn the container giving it a name through the run command the name is choosen randomly.
+			\begin{listing}[H]
+				\caption{Start and stop containers}
+				\label{lst:p01:ch05:start_stop_containers}
+				\inputminted{text}{\relative{chapter_04/section_5.1.2/start_stop_containers.lst}}
+			\end{listing}
+			Both commands confirm its execution by printing the containers id or name respectively when they were successful.
 			\subsubsection{\mintinline{text}{docker rm} and \mintinline{text}{docker rmi}}
+			If we don't need a container and/or image anymore we can just remove them by invoking \mintinline{text}{docker rm} for removing containers and \mintinline{text}{docker rmi} to remove images:
+			\begin{listing}[H]
+				\caption{Removes containers/images}
+				\label{lst:p01:ch05:remove_containers_images}
+				\inputminted{text}{\relative{chapter_04/section_5.1.2/remove_containers_images.lst}}
+			\end{listing}
+			Like for starting and stopping the container you can specify the id or the name to \mintinline{text}{rm}. For \mintinline{text}{rmi} you can either specify the id or the combination of \mintinline{text}{repository:tag}.
 			\subsubsection{\aws{} Container Service login}\label{p01:ch05:container_service_login}
-%			For example we do use the docker service in \aws{}. The address scheme of the container service is \mintinline{text}{https://<accountnum>.dkr.ecr.us-east-1.amazonaws.com}. To be able to pull and push images to that repository we would use \mintinline{text}{docker login -p password -u username https://<accountnum>.dkr.ecr.us-east-1.amazonaws.com}
+			In some cases you need to work with the \aws{} container service to pull and/or push images from and to the docker registry to be able to test changes of the images. To do so you need several things:
+			\begin{itemize}
+				\item The secret and access key of your \aws{} account
+				\item The permissions to interact with \aws{} container service registry
+				\item The \aws{} client software package named \mintinline{text}{awscli}
+			\end{itemize}
+			The secret and access key should have been communicated to you on account creation. If you don't have them available contact the infrastructure team most likely John Bodenstein. To get permissions to interact with the \aws{} container service registry also contact John Bodenstein. The \aws{} client software can be installed by \mintinline{text}{sudo apt install awscli}. Once done execute \mintinline{text}{aws configure} and configure the \aws{} client (providing your secret and access key etc. pp.).
+			
+			To do a docker login to be able to use the \aws{} container service registry execute \mintinline{text}{aws ecr get-login --region us-east-1}. The command generates a \mintinline{text}{docker login} command line which you can use - i.e. execute - to perform the docker login into the \aws{} container service registry. Once done you can pull/push images by prefixing your image repository with the \aws{} container service registry address, namely \mintinline{text}{710991980648.dkr.ecr.us-east-1.amazonaws.com}. 
+			
+			For example take the repository list given by listing \ref{lst:p01:ch05:docker_images}. Lets assume we want to push our test image into the \aws{} container service registry. Lets furthermore assume we already performed the docker login as explained above. The first thing we need to do is to tag our test image into the same repository but on the \aws{} container service registry by executing
+			\setmintedinline{breaklines=true}
+			\begin{center}
+				\mintinline{text}{docker tag recommind/test:test 710991980648.dkr.ecr.us-east-1.amazonaws.com/recommind/test:test}
+			\end{center}
+			\setmintedinline{breaklines=false}
+			Now we specified where the location of the image shall be. We push the image into the repository by executing
+			\begin{center}
+				\mintinline{text}{docker push 710991980648.dkr.ecr.us-east-1.amazonaws.com/recommind/test:test}
+                   \end{center}
+                   Wait for the push to be complete.
+                   
+                   If you want to pull an image from the \aws{} container service registry just use the same repository specification as for the push command:
+                   \begin{center}
+                   		\mintinline{text}{docker pull 710991980648.dkr.ecr.us-east-1.amazonaws.com/recommind/test:test}
+                 	\end{center}
 	\section{The base docker mercurial repositories}\label{p01:ch05:docker_base_repos}
 		\subsection{Naming conventions for docker repository names}
 		\subsection{The \texttt{foundation} repository}
