@@ -148,7 +148,7 @@ defined state such that the engine can function properly.
 			
 			\subsubsection{prestart50}
 			Besides several configuration steps concerning filesystem setup and the embedding of external resources into the system (like the Windows share) we do also need to configure a set of additional agent and server processes on the Linux host to fullfil the requirement of exposing monitoring and directory shared information to other endpoints in the AWS environment. Those additional services and their configuration will now be explained.
-			\begin{description}
+			\begin{description}\sloppy
 				\item[smb server configuration] Writes a smb configuration file to \emph{/etc/samba/smb.conf}, joins the server to the domain and restarts the smb server.
 				\item[systemd unit description installation] Writes a \emph{systemd} environment file to \emph{/etc/default/recommind-bootup}. This file contains the recommind specific bootup environment variable and its bootup options. These options are consumed by a second file which is written to \emph{/etc/systemd/system/recommind-bootup.service}. It contains the appropriate \emph{systemd} unit description.
 				\item[splunk config removal] Creates backups of the splunk input and JMX configuration files before removing those files from the system.

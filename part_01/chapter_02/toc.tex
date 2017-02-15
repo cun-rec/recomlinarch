@@ -74,7 +74,6 @@
 						child [missing] {}
 						child { node {test}
 							child { node {ubuntu}
-								child { node {install}}
 								child { node {execution}}
 							}
 						}
@@ -87,7 +86,22 @@
 				\item[deployment\_baseengine] This is a child image of \emph{deployment\_base}. Its parent is a base image for of all application specific docker containers like App server, CORE and Pgbouncer. Those containers usually contain java applications and have their own bootup logic which is implemented in python. Therefore the parent docker image file contains installation instructions for java, python and the required python modules. Furthermore \emph{deployment\_base} defines the bootup location \emph{/opt/recommind/bootup} where the bootup scripts can be found as well as a docker entrypoint in order to trigger those scripts after container startup.
 				
 				\emph{deployment\_baseengine} in turn is a parent of different CORE containers. The docker image file includes installation instructions in order to install the CORE zip. There are some installation scripts located at \emph{/integration/docker/deployment\_baseengine/ubuntu/install} which are copied into the docker container and triggered as part of the docker image build.
-				\item[deployment\_ingestionengine]
-				\item[deployment\_reviewengine]
-				\item[test]
+				\item[deployment\_ingestionengine] This is a child image of \emph{deployment\_baseengine}. Its install script copies the \emph{configuration.system.properties} file to the bootup source directory. This file contains the \emph{ingestion} role name which is consumed by the CORE bootup procedure.
+				\item[deployment\_reviewengine] Same as mentioned in \emph{deployment\_ingestionengine} but we use the role \emph{reviewengine} and the install script installs the classic Axcelerate zip additionally.
+				\item[test] This is a child image of \emph{deployment\_reviewengine}. It is used to run Ubuntu gate tests on the jenkins build machine. The \emph{execution} folder contains a script which takes the following arguments:
+				\begin{itemize}
+					\item --force\_run\_all: Optional flag to force the execution of all test suits even in case of failing suites.
+					\item list of test suites: At least one gate test suit must be given. The paths are relative, e.g. \emph{gate/infrastructure/testsuite\_coreapi\_measures.xml}.
+				\end{itemize}
+				If any suite fails on the jenkins system, the \emph{mindserver-projects} folder will be archived and saved as \emph{mindserver-projects.zip} on \emph{laos} in an appropriate sub folder of \emph{.../CORE\_major\_minor/UbuntuGateTestLogs/build/distributions/test-output/...}. In addition we find a \emph{result.csv} file at this location which contains the failed suite names, the number of total tests per suite as well as the number of skipped and failed tests.
+				
+				Please note that the script consumes a \emph{TESTAGENT} zip file and the following environment variables:
+				\begin{itemize}
+					\item MINDSERVER\_HOME
+					\item MINDSERVER\_PROJECTS
+					\item JAVA\_HOME
+					\item TEST\_VOLUME: The location where the \emph{test-output} folder will be created. Furthermore the script expects the \emph{TESTAGENT} zip file here.
+				\end{itemize}
 			\end{description}
+			
+			\subsubsection{The CORE bootup phases}
