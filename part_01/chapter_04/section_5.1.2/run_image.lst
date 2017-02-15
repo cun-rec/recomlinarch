@@ -1,0 +1,7 @@
+cun@cun-ubuntu-dev:~$ docker run -d fc997f29cc53
+3100b03721c5d87498eb65db2ec4206ede147e3ed7381b68dc37363a6366fa6e
+cun@cun-ubuntu-dev:~$ docker ps
+CONTAINER ID    IMAGE               COMMAND               CREATED
+           STATUS             PORTS              NAMES
+3100b03721c5    fc997f29cc53        "/usr/sbin/sshd -D"   8 seconds ago
+           Up 8 seconds       22/tcp             gigantic_joliot

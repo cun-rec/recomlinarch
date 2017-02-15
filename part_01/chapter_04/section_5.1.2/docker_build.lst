@@ -1,0 +1,27 @@
+cun@cun-ubuntu-dev:~/dockerexmpl$ ll
+drwxrwxr-x 2 cun cun 4096 Feb 14 14:56 ./
+drwxrwxr-x 2 cun cun 4096 Feb 14 14:54 ../
+-rw-rw-r-- 2 cun cun 4096 Feb 14 14:56 Dockerfile
+cun@cun-ubuntu-dev:~/dockerexmpl$ docker build -f Dockerfile .
+Sending build context to Docker daemon 2.048 kB
+Step 1 : FROM ubuntu:16.04
+ ---> f753707788c5
+Step 2 : RUN apt-get update && apt-get upgrade -y &&
+ apt-get install -y openssh-server && mkdir /var/run/sshd
+ ---> Running in 451e73b4d1a5
+...
+ ---> 6fab3ba17962
+Removing intermediate container 451e73b4d1a5
+Step 3 : RUN echo root:root | chpasswd
+ ---> Running in 42d26e28a6ec
+ ---> 5079ed669a19
+Removing intermediate container 42d26e28a6ec
+Step 4 : EXPOSE 22
+ ---> Running in ef784960ab69
+ ---> 1ba1df434c5f
+Removing intermediate container ef784960ab69
+Step 5 : CMD /usr/sbin/sshd -D
+ ---> Running in 162f144d7370
+ ---> fc997f29cc53
+Removing intermediate container 162f144d7370
+Successfully built fc997f29cc53

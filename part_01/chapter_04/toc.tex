@@ -19,17 +19,57 @@
 		\end{itemize}
 
 		\subsection{Repositories}
-		A repository is a location or endpoint an image is put into. This can be local as well as a remote endpoint. For better organization images we can be tagged/labeld. If not specified the default tag ist \mintinline{text}{latest}.
+		A repository is a location or endpoint an image is put into. This can be local as well as a remote endpoint. For better organization images we can be tagged/labeled. If not specified the default tag ist \mintinline{text}{latest}.
 		\subsection{The most relevant docker commands}
 		The docker container system is very complex. However most of the time the set of commands you will need to deal with is small. The in our opinion most relevant commands will be described here.
-			\subsubsection{\texttt{docker images}}
-			\mintinline{text}{docker images} gives us just a list of every image in our system.
-			\subsubsection{\texttt{docker build}}
+			\subsubsection{\mintinline{text}{docker images}}
+			\mintinline{text}{docker images} gives us just a list of every image in our system and looks like this:
+			\begin{listing}[H]
+				\caption{Output of docker images}
+				\label{lst:p01:ch05:docker_images}
+				\inputminted{text}{\relative{chapter_04/section_5.1.2/docker_images.lst}}
+			\end{listing}
+			Here we see a list of three images. Note the first two images do have two different tags namely latest and a convention we use in our docker base repositories (see section \ref{p01:ch05:docker_base_repos} for an explaination about the naming convention). But it is the same image what you can see if you take a look at the image id. 
+			\subsection{\mintinline{text}{docker pull}}
+			We use the combination of the repository and the tag to uniquely identify a specific docker image. For example the first image id \mintinline{text}{745551d6bb3} could be pulled by executing \mintinline{text}{docker pull recommind/deployment-base:latest}. Of course we would need access to the repository \mintinline{text}{recommind/deployment-base}. Here in our example we don't have a address schema in our repository name as it is a local repository. To get a more complete example of how to login and pull images from a remote target please see section \ref{p01:ch05:container_service_login}
+			\subsubsection{\mintinline{text}{docker build} and \mintinline{text}{docker tag}}
+			To create a docker image we use the \mintinline{text}{docker build} command. The minimum arguments required is a so called \emph{build context} on the assumption that the \dockerfile{} resides in current working directory. Otherwise the \dockerfile{} can be refered to by the \mintinline{text}{-f} option. The \emph{build context} defines the scope with in the filesystem which is available for access to the \mintinline{text}{docker build} process. Since we're able to place files from the host system into the docker image during image creation the \mintinline{text}{docker build} process needs access to them. And since the \mintinline{text}{docker build} process is already a container process we need to specify a location which can be mapped into this process to give it access to files which are needed during image creation. The build process does \emph{not} have access to the whole system.
 			
-			\subsubsection{\texttt{docker run}}
-			\subsubsection{\texttt{docker ps}}
-			\subsubsection{\texttt{docker rm} and \texttt{docker rmi}}
-	\section{The base docker mercurial repositories}
+			Lets assume our \dockerfile{} is the one from listing \ref{lst:p01:ch05:sample_dockerfile}. The following listing shows the command we could use to build the docker image. We omitted parts of the \mintinline{text}{apt-get} output as it is a lot:
+			\begin{listing}[H]
+				\caption{Output of docker build}
+				\label{lst:p01:ch05:docker_build}
+				\inputminted{text}{\relative{chapter_04/section_5.1.2/docker_build.lst}}
+			\end{listing}
+			We told the build process to use the current working directory as our build context (by specifying \mintinline{text}{.} as last parameter to the command). So the first thing the build process is doing is to scan the build context to get aware of everything in it. As there is only the \dockerfile{} the process tells us the size of that file (as this is the size of data residing within the build context). Then the build process just executes every statement in the \dockerfile{}. Every such statement defines a step to be executed. Every such execution modifies the intermediate docker image. Like a version control system this modification will be committed hence we gain a new intermediate container. Like vcs's docker is aware of what changes were already committed if one step failed for whatever reason we can fix it, build again and the docker process will recognize that it only needs to apply the steps which were not committed already.
+			
+			So lets take a look at the first step. The first step tells the build process what image we're going to modify. Here we refered the image by \mintinline{text}{ubuntu:16.04}. Taking a look at the docker images in listing \ref{lst:p01:ch05:docker_images} shows that this image has id \mintinline{text}{f753707788c5}. So the build process takes this as our base. It than spawns a container of this image with id \mintinline{text}{451e73b4d1a5} and executes the statement. The result is a modified environment which the build process commits yielding a new intermediate docker image with id \mintinline{text}{6fab3ba17962}. As we don't need the spawned container anymore it tells us that he's going to remove that intermediate container. This procedure will be repeated until the \dockerfile{} has been processed completely. The last commit then defines the id of our image:
+			\begin{listing}[H]
+				\caption{List of docker images after docker build}
+				\label{lst:p01:ch05:list_images_after_build}
+				\inputminted{text}{\relative{chapter_04/section_5.1.2/list_images_after_build.lst}}
+			\end{listing}
+			We notice two things. First the new image listed has the image id which was reported in the success message of the build process. And second that the repository as well as the tag is specified as \mintinline{text}{none}. The reason is that we did not tell the build process to put the new image into a repository and tag it. We can catch up on this by tagging the image explicitely:
+			\begin{listing}[H]
+				\caption{Tagging an image}
+				\label{lst:p01:ch05:tag_image}
+				\inputminted{text}{\relative{chapter_04/section_5.1.2/tag_image.lst}}
+			\end{listing}
+			It is of course possible to tell the \mintinline{text}{docker build} process to tag the created image directly by specifying \mintinline{text}{-t reposirotyname:tag} as parameter.
+			\subsubsection{\mintinline{text}{docker run} and \mintinline{text}{docker ps}}
+			To spawn a container out of an image we use the \mintinline{text}{docker run} command. The easiest format is just
+			\mintinline{text}{docker run <image_id>}. However, remember that we specified in the \dockerfile{} that the command to be executed is to start the sshd daemon and if not specified otherwise the run process will start the container in \emph{attached} mode i.e. we're attached to the container. But since the daemon is no shell the command just don't return until the sshd terminates. Fortunately we can start the container in \emph{dettached} mode by specifying the \mintinline{text}{-d} option. The run command has a whole bunch of options. We will not discuss every option here. You can get a list of all options by executing \mintinline{text}{docker help run}.
+			
+			Now to see that our container started successfully we just list the docker container processes. Here is how the run and ps list looks like:
+			\begin{listing}[H]
+				\caption{Running an image}
+				\label{lst:p01:ch05:run_image}
+				\inputminted{text}{\relative{chapter_04/section_5.1.2/run_image.lst}}
+			\end{listing}
+			\subsubsection{\mintinline{text}{docker rm} and \mintinline{text}{docker rmi}}
+			\subsubsection{\aws{} Container Service login}\label{p01:ch05:container_service_login}
+%			For example we do use the docker service in \aws{}. The address scheme of the container service is \mintinline{text}{https://<accountnum>.dkr.ecr.us-east-1.amazonaws.com}. To be able to pull and push images to that repository we would use \mintinline{text}{docker login -p password -u username https://<accountnum>.dkr.ecr.us-east-1.amazonaws.com}
+	\section{The base docker mercurial repositories}\label{p01:ch05:docker_base_repos}
 		\subsection{Naming conventions for docker repository names}
 		\subsection{The \texttt{foundation} repository}
 		\subsection{The \texttt{build\_base} repository}

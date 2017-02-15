@@ -1,0 +1,13 @@
+cun@cun-ubuntu-dev:~$ docker images
+REPOSITORY                TAG                              IMAGE ID            
+              CREATED                      SIZE
+recommind/deployment-base latest                           74a5551d6bb3
+            3 weeks ago                    893 MB
+recommind/deployment-base ubuntu16.04-jdk8u92_b673289bff1c 74a5551d6bb3
+            3 weeks ago                    893 MB
+recommind/foundation      latest                           4dee6109f9e2
+            3 weeks ago                    399.7 MB
+recommind/foundation      ubuntu16.04_ddb6483c86d8         4dee6109f9e2
+            3 weeks ago                    399.7 MB
+ubuntu                    16.04                            f753707788c5
+            4 months ago                   127.2 MB
