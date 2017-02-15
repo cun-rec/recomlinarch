@@ -1,0 +1,12 @@
+cun@cun-ubuntu-dev:~$ docker stop 3100b03721c5
+3100b03721c5
+cun@cun-ubuntu-dev:~$ docker start 3100b03721c5
+3100b03721c5
+cun@cun-ubuntu-dev:~$ docker ps
+CONTAINER ID    IMAGE           COMMAND               CREATED             
+           STATUS           PORTS                NAMES
+3100b03721c5    fc997f29cc53    "/usr/sbin/sshd -D"   About an hour ago
+           Up 2 seconds     22/tcp               gigantic_joliot
+cun@cun-ubuntu-dev:~$ docker stop gigantic_joliot
+gigantic_joliot
+cun@cun-ubuntu-dev:~$
