@@ -142,8 +142,10 @@
 					\item \emph{[A-Za-z]:\textbackslash Projects} will be changed to \emph{/srv/recommind/projects}
 					\item \emph{[A-Za-z]:\textbackslash Storage} will be changed to \emph{/srv/recommind/storage}
 					\item \emph{..\textbackslash Storage} will be changed to \emph{/srv/recommind/storage}
-					\item \emph{\textbackslash \textbackslash Fileshare} will be changed to \emph{/Fileshare}. Note that we mount the known Windows file share to the root of the docker container.
+					\item \emph{\textbackslash \textbackslash Fileshare} will be changed to \emph{/Fileshare}. We mount the known Windows file share to the root of the docker container.
 				\end{itemize}
+					
+					The fix tool writes a CSV file to \emph{/srv/recommind/migration/log}. This file provides information about the modified fields including the old and new value. In addition there is a column which shows whether the fields are Linux compatible. Please note that the fix tool can't fix everything automatically. It can't resolve arbitrary Windows paths for instance.
 				\item[register pgbouncer]
 			\end{description}
 			\subsubsection{poststart70}
