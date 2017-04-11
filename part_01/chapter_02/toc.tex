@@ -123,11 +123,18 @@
 				\item[setup launcherservice credentials]
 				\item[setup mindserver process configuration]
 			\end{description}
+			\subsubsection{prestart70}
+			\begin{description}
+				\item[coreconfiguration]
+			\end{description}
+			\subsubsection{prestart80}
+			\begin{description}
+				\item[wait for master service]
+			\end{description}
 			\subsubsection{start50}
 			\begin{description}
 				\item[start engine] After all \emph{prestart} phases have been executed successfully the launcher service process has to be started. As the sub process call may not block the following bootup phases this process has to run in the background.
 			\end{description}
-			\subsubsection{poststart50}
 			\subsubsection{poststart60}
 			\begin{description}
 				\item[configure tomcat] This script has two responsibilities. First it has to download a keystore from Amazon S3 which is used for new projects. Secondly we have to configure tomcat at the master service. These steps are only necessary for new projects or after a Linux migration. The appropriate tomcat parameters are configured by the following section of the CORE yaml file:
