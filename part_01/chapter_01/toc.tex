@@ -58,7 +58,7 @@ defined state such that the engine can function properly.
 		\item[tmp] First: this location has \textbf{nothing} to do with the temp drive/directory of the Linux host. For engine servers dedicated temp-drives are created and attachted to the engine instance. Those drives are mounted to this location and mapped into the docker container later on to provide a dedicated temp drive large enough to hold every temporary data the engine container comes up with. It is used by the container which is provided by the docker service thus it is located in \emph{/srv}.
 	\end{description}
 	
-	\paragraph{/opt:} contains the software packages which runs on the server. The only relervant one for the index team is located in the subdirectory \emph{recommind/bootup} which contains the bootloader which runs on the Linux host instance. Besides the bootloader itself it also contains the bootloader logfile(s) and is therefore the first place to take a look at when the Linux host bootup procedure failed.
+	\paragraph{/opt:} contains the software packages which run on the server. The only relervant one for the index team is located in the subdirectory \emph{recommind/bootup} which contains the bootloader which runs on the Linux host instance. Besides the bootloader itself it also contains the bootloader logfile(s) and is therefore the first place to take a look at when the Linux host bootup procedure failed.
 	
 	\paragraph{/etc:} is the directory containing host specific and system-wide configuration files. Relervant for the index team are here the subdirectories
 	\begin{description}
@@ -126,6 +126,7 @@ defined state such that the engine can function properly.
 					\inputminted{yaml}{\relative{chapter_01/section_3.2/ad_realm_description_example.yaml}}
 				\end{listing}
 
+				\item[Setup user and group] We have to create the user \emph{recomadm} in a new group named \emph{recommind}. Both the user and group have the id \emph{2000}. This step has to be performed in an early bootup phase as the owner and permissions of our host directories will be set later. If the host is started again, the bootloader recognises the existing user and group and doesn't try to perform the creation once more.
 			\end{description}
 			
 			\subsubsection{prestart10}
@@ -149,9 +150,13 @@ defined state such that the engine can function properly.
 			\subsubsection{prestart50}
 			Besides several configuration steps concerning filesystem setup and the embedding of external resources into the system (like the Windows share) we do also need to configure a set of additional agent and server processes on the Linux host to fullfil the requirement of exposing monitoring and directory shared information to other endpoints in the AWS environment. Those additional services and their configuration will now be explained.
 			\begin{description}\sloppy
-				\item[smb server configuration] Writes a smb configuration file to \emph{/etc/samba/smb.conf}, joins the server to the domain and restarts the smb server.
 				\item[systemd unit description installation] Writes a \emph{systemd} environment file to \emph{/etc/default/recommind-bootup}. This file contains the recommind specific bootup environment variable and its bootup options. These options are consumed by a second file which is written to \emph{/etc/systemd/system/recommind-bootup.service}. It contains the appropriate \emph{systemd} unit description.
 				\item[splunk config removal] Creates backups of the splunk input and JMX configuration files before removing those files from the system.
+				\item[Owner and permissions] Sets the owner and permissions of the host directories as follows:
+				\begin{itemize}
+					\item \emph{/srv/recommind} is owned by user \emph{recomadm} of group \emph{recommind}. The desired permissions are \emph{2775}.
+					\item \emph{/srv/tmp} is owned by \emph{root} and the permissions are \emph{1777}.
+				\end{itemize}
 				\item[docker configuration update] Writes a docker configuration file to \emph{/etc/default/docker}. This file is used to set docker options and HTTP(S) proxies. The docker service will be restarted to apply the changes.
 			\end{description}
 			
@@ -175,10 +180,21 @@ defined state such that the engine can function properly.
 			\subsubsection{poststart50}
 			Since all docker containers are up and running we can perform the following poststart scripts:
 			\begin{description}
+				\item[smb server configuration] Writes a smb configuration file to \emph{/etc/samba/smb.conf}, joins the server to the domain and restarts the smb server.
 				\item[start nagios] 
 				\item[start splunk] 
 			\end{description}
 		\subsection{\emph{shutdown} phases}
 			\subsubsection{stop50}
+			\begin{description}
+				\item[Stop docker containers]
+			\end{description}
 			\subsubsection{poststop49}
+			\begin{description}
+				\item[Logfile retention]
+			\end{description}
 			\subsubsection{poststop50}
+			\begin{description}
+				\item[Export logical volumes]
+				\item[Remove migration volumes]
+			\end{description}
