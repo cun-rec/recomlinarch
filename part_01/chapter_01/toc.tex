@@ -106,6 +106,7 @@ defined state such that the engine can function properly.
 					\label{lst:p01:ch01:linhost_env_var_descr}
 					\inputminted{yaml}{\relative{chapter_01/section_3.2/env_var_description_example.yaml}}
 				\end{listing}
+				\item[Setup user and group] We have to create the user \emph{recomadm} in a new group named \emph{recommind}. Both the user and group have the id \emph{2000}. This step has to be performed in an early bootup phase as the owner and permissions of our host directories will be set later. If the host is started again, the bootloader recognises the existing user and group and doesn't try to perform the creation once more.
 			\end{description}
 
 			\subsubsection{prestart01}
@@ -125,8 +126,6 @@ defined state such that the engine can function properly.
 					\label{lst:p01:ch01:linhost_ad_realm_descr}
 					\inputminted{yaml}{\relative{chapter_01/section_3.2/ad_realm_description_example.yaml}}
 				\end{listing}
-
-				\item[Setup user and group] We have to create the user \emph{recomadm} in a new group named \emph{recommind}. Both the user and group have the id \emph{2000}. This step has to be performed in an early bootup phase as the owner and permissions of our host directories will be set later. If the host is started again, the bootloader recognises the existing user and group and doesn't try to perform the creation once more.
 			\end{description}
 			
 			\subsubsection{prestart10}
