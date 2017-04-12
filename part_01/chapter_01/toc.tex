@@ -69,7 +69,7 @@ defined state such that the engine can function properly.
 	\paragraph{/var:} is the directory containing every variable - i.e. continually changed - files during system uptime. Most relevant for problem analysis is the subdirectory \emph{log} which contains several logfiles especially \emph{syslog} among the others which is the one of the logfiles to inspect if something went wrong during system startup but also during system uptime.
 	
 	\section{Bootloader system configuration}
-	The Linux host instances are being configured by the bootloader in various ways. Here we want to describe every phase in detail but omit the presentation of the phase specific source code. An detailed presentation of the Linux host bootloader source will be treated in chapter \ref{p01:ch08} on page \pageref{p01:ch08}.
+	The Linux host instances are being configured by the bootloader in various ways. Here we want to describe every phase in detail but omit the presentation of the phase specific source code. An detailed presentation of the Linux host bootloader source will be treated in chapter \ref{p01:ch04} on page \pageref{p01:ch04}.
 	
 		\subsection{\emph{bootup} phases}\label{p01:ch221}
 			The \emph{bootup} phases will run at every instance startup. It's important that one of the phases creates \emph{systemd} unit-descriptions and places them to \emph{/etc/systemd}. The \emph{systemd} init process in turn ensures that every such unit-description is read and produces a \emph{systemd} service endpoint. It will then show up by the \emph{systemctl} Linux command and can be started, stopped, restarted and queried for its status with that command. When enabled every endpoint is automatically started (in a specified order) by the \emph{systemd} init process at system startup.
@@ -181,20 +181,21 @@ defined state such that the engine can function properly.
 			Since all docker containers are up and running we can perform the following poststart scripts:
 			\begin{description}
 				\item[smb server configuration] Writes a smb configuration file to \emph{/etc/samba/smb.conf}, joins the server to the domain and restarts the smb server.
-				\item[start nagios] 
-				\item[start splunk] 
+				\item[start nagios] Starts the nagios agent.
+				\item[start splunk] Waits for a CORE related input configuration file which is beeing created during CORE docker container bootup, writes additional configurations and starts the splunk forwarder.
 			\end{description}
 		\subsection{\emph{shutdown} phases}
+		This phase is beeing executed after the host shutdown command. It can be used to perform cleanup and to stop running docker containers which might have own shutdown phases.
 			\subsubsection{stop50}
 			\begin{description}
-				\item[Stop docker containers]
+				\item[Stop docker containers] Stops and removes all running docker containers. New docker containers will be spawned at next host startup by using the existing docker images.
 			\end{description}
 			\subsubsection{poststop49}
 			\begin{description}
-				\item[Logfile retention]
+				\item[Logfile retention] Only relevant for app- and service-tier.
 			\end{description}
 			\subsubsection{poststop50}
 			\begin{description}
-				\item[Export logical volumes]
-				\item[Remove migration volumes]
+				\item[Export logical volumes] Unmounts and exports all existing logical volumes.
+				\item[Remove migration volumes] Unmounts and removes Windows volumes including CORE data to be migrated to Linux.
 			\end{description}
