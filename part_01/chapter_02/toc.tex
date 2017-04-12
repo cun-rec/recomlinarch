@@ -108,28 +108,38 @@
 		In chapter \ref{p01:ch221} we treated the different bootup phases on the Linux host. The CORE docker container contains its own bootup phases for the CORE part. The appropriate python code is located at \emph{bootup/bootup} in the CORE repository and consists of the following Linux specific phases. We omit the phases used by the \emph{batch\_asg} or any other stuff:
 			
 			\subsubsection{prestart00}
-			\begin{description}
-				\item[setup directories]
+			\begin{description}\sloppy
+				\item[check debug environment] This script alows debugging of CORE docker containers. If the container environment variable \emph{RECOM\_DEBUG} is set to an arbitrary value, the script blocks the container bootloader in the first prestart phase. This is useful as certain script failures may lead to a container bootup abortion. In this case we would be unable to log in to the stopped container in order to make manual code changes.
+				\item[setup directories] This script creates the directories \emph{/srv/recommind/projects} and \emph{/srv/recommind/storage} with the desired permissions \emph{2775} and the user \emph{recomadm} of group \emph{recommind}. In addition, it sets ACL's on \emph{/srv/recommind}. Please note that \emph{/srv/recommind} has already been created on the docker host and ACL's have been set, too. We set the ACL's again during container bootup as we should support container testing. It provides the possibility of running CORE docker containers without the complete docker host environment.
 			\end{description}
 			\subsubsection{prestart50}
 			\begin{description}
-				\item[configurate base]
-				\item[configurate splunk]
-				\item[setup base]
+				\item[configure base] We have to create a CORE configuration map consisting of several configuration steps. This first script writes a \emph{remove} command to this map which is beeing filed with additional steps in subsequent prestart phases.
+				\item[configure splunk] Writes a CORE specific splunk configuration input file by using an appropriate template. This file is beeing consumed by splunk which runs on the docker host.
+				\item[setup base] This script prepares the mindserver projects and performs the corresponding basic setup. It is responsible for the following steps:
+				\begin{itemize}
+					\item Downloading the branding jar from S3 and renaming of branding icons
+					\item Mindserver project preparation
+					\item 64 Bit Crawler architecture setup
+					\item Migrating Windows data if a migration volume is found
+					\item Downloading the tomcat certificate from S3 if no migration volume is found and an empty project is in use
+				\end{itemize}
 			\end{description}
 			\subsubsection{prestart60}
 			\begin{description}
-				\item[configurate base]
-				\item[setup launcherservice credentials]
-				\item[setup mindserver process configuration]
+				\item[configure base] This is the second CORE configuration script which adds the two basic host roles \emph{Application Server} and \emph{Engine Server} as well as the process control identifier to the configuration map.
+				\item[configure ingestion] Adds the \emph{Ingestion Engine} specific roles  \emph{Ingestion Application Server}, \emph{Ingestion Engine Server} and \emph{Crawler} to the CORE configuration map. This script is only executed for the \emph{ingestionengine} role.
+				\item[configure review] Adds the \emph{Review Engine} specific roles  \emph{Axcelerate Application Server} and \emph{Axcelerate Engine Server} to the CORE configuration map. This script is only executed for the \emph{reviewengine} role.
+				\item[setup launcherservice credentials] Optinal update of launcher service credentials by using the super user name and corresponding password which may be contained in the CORE yaml file.
+				\item[setup mindserver process configuration] Sets the temp directory to \emph{/tmp} as well as optional JMX parameters defined in the CORE yaml file.
 			\end{description}
 			\subsubsection{prestart70}
 			\begin{description}
-				\item[coreconfiguration]
+				\item[coreconfiguration] As described in the previous prestart chapters we have built a CORE configuration map. This script consumes the map and performs the configuration.
 			\end{description}
 			\subsubsection{prestart80}
 			\begin{description}
-				\item[wait for master service]
+				\item[wait for master service] At the end of the prestart phase we have to wait for a running master service. The service is used by the CORE startup and certain poststart scripts which run against the service.
 			\end{description}
 			\subsubsection{start50}
 			\begin{description}
@@ -137,7 +147,7 @@
 			\end{description}
 			\subsubsection{poststart60}
 			\begin{description}
-				\item[configure tomcat] This script has two responsibilities. First it has to download a keystore from Amazon S3 which is used for new projects. Secondly we have to configure tomcat at the master service. These steps are only necessary for new projects or after a Linux migration. The appropriate tomcat parameters are configured by the following section of the CORE yaml file:
+				\item[configure tomcat] This script has two responsibilities. First it has to download a keystore from Amazon S3 which is used for new projects. Secondly we have to configure tomcat at the master service. These steps are necessary for new projects and migrated data as well. The script is only executed on first bootup unless we had script failures. The appropriate tomcat parameters are configured by the following section of the CORE yaml file:
 				
 				\begin{listing}[H]
 					\caption{Tomcat configuration}
@@ -153,7 +163,7 @@
 				\end{itemize}
 					
 					The fix tool writes a CSV file to \emph{/srv/recommind/migration/log}. This file provides information about the modified fields including the old and new value. In addition there is a column which shows whether the fields are Linux compatible. Please note that the fix tool can't fix everything automatically. It can't resolve arbitrary Windows paths for instance.
-				\item[register pgbouncer]
+				\item[register pgbouncer] Registers pgbouncer at the master service. Pgbouncer runs in it's own docker container in parallel to the CORE container. It must be available before registration. CORE provides the appropriate registration script which isn't available within the pgbouncer container. The registration is only performed on first bootup and won't be repeated on further bootups unless we have registration failures.
 			\end{description}
 			\subsubsection{poststart70}
 			\begin{description}
