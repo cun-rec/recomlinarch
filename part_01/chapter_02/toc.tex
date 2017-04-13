@@ -1,46 +1,48 @@
-\chapter{The Linux container environment (CORE-installation)}
-	\section{Filesystem layout of the engine Docker container}
-	We find the following filesystem hierarchy within the engine docker container:
-	
-	\tikzstyle{every node}=[draw=black,thick,anchor=west]
-	\tikzstyle{selected}=[draw=red,fill=red!30]
-	\tikzstyle{optional}=[dashed,fill=gray!50]
-	\begin{tikzpicture}[
-		grow via three points={one child at (0.5,-0.7) and two children at (0.5,-0.7) and (0.5,-1.4)},
-		edge from parent path={(\tikzparentnode.south) |- (\tikzchildnode.west)}]
-		\node(root) {/}
-			child { node {srv}
-				child { node {migration}}
-				child { node {recommind}
-					child { node {bootup}}
-					child { node {projects}}
-				}
-				child [missing] {}
-				child [missing] {}
-				child { node {tmp}}
-			}
-			child [missing] {}
-			child [missing] {}
-			child [missing] {}
-			child [missing] {}
-			child [missing] {}
-			child { node {opt}
-				child { node {recommind}
-					child { node {bootup}}
-				}
-			}
-			child [missing] {}
-			child [missing] {}
-			child { node {etc}}
-			child { node {var}}
-			child { node {WINDOWS-NAS-NAME}};
-	\end{tikzpicture}
-	
-	The directories \emph{/srv/recommind}, \emph{/srv/migration} as well as the \emph{/WINDOWS-NAS-NAME} are shared between the Linux host and the docker container as mentioned in chapter \ref{p01:ch021} on page \pageref{p01:ch021} already.
+\chapter{The Linux container environment}
 	\section{Setting up CORE docker containers}
 	In chapter \ref{p01:ch1} we mentioned the build pipeline. Now we describe the CORE installation procedure in more detail.
+
+		\subsection{Filesystem layout of the engine Docker container}
+		We find the following filesystem hierarchy within the engine docker container:
+		
+		\tikzstyle{every node}=[draw=black,thick,anchor=west]
+		\tikzstyle{selected}=[draw=red,fill=red!30]
+		\tikzstyle{optional}=[dashed,fill=gray!50]
+		\begin{tikzpicture}[
+			grow via three points={one child at (0.5,-0.7) and two children at (0.5,-0.7) and (0.5,-1.4)},
+			edge from parent path={(\tikzparentnode.south) |- (\tikzchildnode.west)}]
+			\node(root) {/}
+				child { node {srv}
+					child { node {migration}}
+					child { node {recommind}
+						child { node {bootup}}
+						child { node {projects}}
+					}
+					child [missing] {}
+					child [missing] {}
+					child { node {tmp}}
+				}
+				child [missing] {}
+				child [missing] {}
+				child [missing] {}
+				child [missing] {}
+				child [missing] {}
+				child { node {opt}
+					child { node {recommind}
+						child { node {bootup}}
+					}
+				}
+				child [missing] {}
+				child [missing] {}
+				child { node {etc}}
+				child { node {var}}
+				child { node {WINDOWS-NAS-NAME}};
+		\end{tikzpicture}
+	
+		The directories \emph{/srv/recommind}, \emph{/srv/migration} as well as the \emph{/WINDOWS-NAS-NAME} are shared between the Linux host and the docker container as mentioned in chapter \ref{p01:ch021} on page \pageref{p01:ch021} already.
+
 		\subsection{Docker image types}
-		First we treat the different CORE docker image types and their responsibilities. The different docker image files are located at \emph{integration/docker} in the CORE repository:
+		Now we treat the different CORE docker image types and their responsibilities. The appropriate docker image files are located at \emph{integration/docker} in the CORE repository:
 				
 		\tikzstyle{every node}=[draw=black,thick,anchor=west]
 		\tikzstyle{selected}=[draw=red,fill=red!30]
@@ -104,7 +106,7 @@
 			\end{itemize}
 		\end{description}
 		
-		\subsection{The CORE bootup phases}
+		\subsection{The CORE bootup phases}\label{p01:ch0322}
 		In chapter \ref{p01:ch221} we treated the different bootup phases on the Linux host. The CORE docker container contains its own bootup phases for the CORE part. The appropriate python code is located at \emph{bootup/bootup} in the CORE repository and consists of the following Linux specific phases. We omit the phases used by the \emph{batch\_asg} or any other stuff:
 			
 			\subsubsection{prestart00}
@@ -169,4 +171,6 @@
 			\begin{description}
 				\item[waitforlauncherservice] In the \emph{start} phase we've started the launcher service process. As this process runs in background we have to ensure that the docker container doesn't stop after the last bootup phase. The wait script blocks the last bootup phase until the launcher service process is finished. It gets the process information from the \emph{start} phase. Please make sure that this script lives in its own and last \emph{poststart phase}. If there are other scripts in the same phase, the bootloader won't be able to report errors of those scripts even thought all scripts within the same phase are executed in parallel. Please also note that any following bootup phases wouldn't be executed at all.
 			\end{description}
-			
+
+	\section{Setting up PgBouncer docker containers}
+	

@@ -5,7 +5,7 @@ In this chapter we treat the bootloader and it's architecture. It is a python ba
 	As mentioned above the bootloader can trigger bootup scripts on arbitrary machines. The following example describes an engine host which uses a total of three bootloaders. The first bootloader is host-centric and two additional instances live in docker containers. Every bootloader triggers specific bootup scripts:
 	\begin{description}
 		\item[Linux host] The bootloader is called at every host startup and performs the bootup phases described in \ref{p01:ch221} on page \pageref{p01:ch221}. This bootloader triggers the start of the following two docker containers which include own bootloaders.
-		\item[CORE docker container]
+		\item[CORE docker container] The entry point of the CORE docker container triggers the CORE specific bootloader and it's bootup phases described in \ref{p01:ch0322} on page \pageref{p01:ch0322}.
 		\item[PgBouncer docker container]
 	\end{description}
 	\section{Convinience functions in \texttt{lib}}
