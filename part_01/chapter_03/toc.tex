@@ -1,7 +1,20 @@
 \chapter{The new \texttt{bootloader}: An overview}\label{p01:ch04}
+In this chapter we treat the bootloader and it's architecture. It is a python based and platform independant module for triggering bootup scripts which may live in certain bootup phases. The bootloader can trigger such scripts on arbitrary machines including Windows hosts, Linux hosts and docker containers.
 	\section{The bootloader architecture}
 	\section{Host- and application-centric reliability}
+	As mentioned above the bootloader can trigger bootup scripts on arbitrary machines. The following example describes an engine host which uses a total of three bootloaders. The first bootloader is host-centric and two additional instances live in docker containers. Every bootloader triggers specific bootup scripts:
+	\begin{description}
+		\item[Linux host] The bootloader is called at every host startup and performs the bootup phases described in \ref{p01:ch221} on page \pageref{p01:ch221}. This bootloader triggers the start of the following two docker containers which include own bootloaders.
+		\item[CORE docker container]
+		\item[PgBouncer docker container]
+	\end{description}
 	\section{Convinience functions in \texttt{lib}}
+		\subsection{Persisting status of bootloader scripts}
+		As the bootloader executes bootup scripts which can run into failures it is helpful to save the state of those scripts on disk. Each script can check the persisted data and gets information about a previous bootup. In addition, the saved state can be modified manually in order to enable or disable scripts and to have more control about the bootup. Therefore the \emph{helper.py} includes the following two methods:
+		\begin{description}
+			\item[safe\_bootup\_script\_status] Takes a yaml file path, a script name and a success flag. If no yaml file exists, it will be created. Script entries in existing yaml files will be modified or added if not present. 
+			\item[is\_bootup\_script\_successfully\_executed] Takes a yaml file path and a script name. It returns \emph{true} if a yaml file exists and includes a script entry with value \emph{true}. In any other cases it returns \emph{false}.
+		\end{description}
 	\section{The boot phases}
 		\subsection{The \texttt{common} role}
 		\subsection{The \texttt{docker\_host} role}
