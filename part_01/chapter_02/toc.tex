@@ -174,3 +174,48 @@
 
 	\section{Setting up PgBouncer docker containers}
 	
+		\subsection{Filesystem layout of the PgBouncer Docker container}
+		We find the following filesystem hierarchy within the PgBouncer docker container:
+		
+		\tikzstyle{every node}=[draw=black,thick,anchor=west]
+		\tikzstyle{selected}=[draw=red,fill=red!30]
+		\tikzstyle{optional}=[dashed,fill=gray!50]
+		\begin{tikzpicture}[
+			grow via three points={one child at (0.5,-0.7) and two children at (0.5,-0.7) and (0.5,-1.4)},
+			edge from parent path={(\tikzparentnode.south) |- (\tikzchildnode.west)}]
+			\node(root) {/}
+				child { node {srv}
+					child { node {pgbouncer}
+						child { node {bootup}}
+					}
+				}
+				child [missing] {}
+				child [missing] {}
+				child { node {opt}
+					child { node {recommind}
+						child { node {bootup}}
+					}
+				}
+				child [missing] {}
+				child [missing] {}
+				child { node {etc}}
+				child { node {var}};
+		\end{tikzpicture}
+	
+		The directory \emph{/srv/pgbouncer} is shared between the Linux host and the docker container as mentioned in chapter \ref{p01:ch021} on page \pageref{p01:ch021} already.
+		
+		\subsection{The PgBouncer bootup phases}
+		As mentioned in \ref{p01:ch0322} the PgBouncer docker container also contains own python bootup phases. The code lives in its own module repository and consists of the following Linux specific phases:
+			
+			\subsubsection{prestart00}
+			\begin{description}
+				\item[configure pgbouncer] Writes configuration files which are consumed by the PgBouncer process.
+			\end{description}
+			\subsubsection{start00}
+			\begin{description}
+				\item[start pgbouncer] Starts the PgBouncer process.
+			\end{description}
+			\subsubsection{poststart00}
+			\begin{description}
+				\item[wait for pgbouncer]  In the \emph{start} phase we've started the PgBouncer process. As this process runs in background we have to ensure that the docker container doesn't stop after the last bootup phase. The wait script blocks the last bootup phase in the same manner as in case of the CORE launcher service mentioned in \ref{p01:ch0322}.
+			\end{description}
