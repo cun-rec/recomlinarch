@@ -2,22 +2,34 @@
 	\section{Introduction}
 	Each customer environment is organized in so called \pod{}s. A \pod{} is roughly a VPN where all the servers are located which are configured as the customer needs it. To create a \pod{} we need to login to a server which serves a specific role: The orchestration server. The orchestration server has installed a couple of (partially self-developed) software packages which we use to create, extend and terminate \pod{}s.
 	\section{Orchestration Server}
-	We do have several orchestration server. To get a list login to the \awsc{} and navigate to the service \emph{Instances}. Then filter the instances by \emph{VADORC}. Now you get a list of all orchestration server available. There are some orchestration server which are used by specific people and before using them you should contact at least those people and ask if the server can be used for your needs. This is very important as we do have a big drawback: Every orchestration server clones the orchestration repository and you typically work directly inside this repository and you need to do so as user \emph{root}. The consequence is that actions of multiple users at the same time are extremely dangerous. For example if user \mintinline{shell}{A} upgrades a \pod{} and user \mintinline{shell}{B} changes the branch of the orchestration repository to a different one of \mintinline{shell}{A} you can destroy \mintinline{shell}{A}'s \pod{} as his commands will be based on the changed repository. So it is crucial to make sure that no other orchestration process or user is working on that machine at the same time.
+	We do have several orchestration server. To get a list login to the \awsc{} and navigate to the service \ectwo{}. Now select \emph{Instances} from the navigation bar at the right side of the webpage. Now filter the instances by typing \emph{VADORC} into the search bar. Now you get an up-to-date list of all orchestration server available. Use the \emph{Tag} tab to get more information about the responsibility of the server.
+	
+There are some orchestration server which are used by specific people and before using them you should contact at least those people and ask if the server can be used for your needs. This is very important as we do have a big drawback:
 
-           % FIXME: complete the list
-           Figure \ref{tab:p03:ch01:overview_orch_servers} shows a list of orchestration servers together the person or team they're reserved for and whom can be asked if the server is free to use.
+Every orchestration server clones the orchestration repository, you typically work directly inside this repository and you need to do so as user \emph{root}. The consequence is that actions of multiple users at the same time are extremely dangerous. For example if user \mintinline{shell}{A} upgrades a \pod{} and user \mintinline{shell}{B} changes the branch of the orchestration repository to a different one of \mintinline{shell}{A} you can destroy \mintinline{shell}{A}'s \pod{} as his commands will be based on the changed repository. So it is crucial to make sure that no other orchestration process or user is working on that machine at the same time.
+
+           Figure \ref{tab:p03:ch01:overview_orch_servers} shows a list of orchestration servers together with the person or team they're reserved for and whom can be asked if the server is free to use.
            \begin{table}[h]
              \center
              \caption{Overview of the orchestration servers and responsibility}
              \begin{tabular}{| l | l | p{5cm} |}
                \hline
-               \textbf{Instancename} & \textbf{Responsibility} & \textbf{Note} \\ \hline
-               \vadorc{05} & Benjamin Schiborr & Usually free to use. If unsure you also may ask jsr \\ \hline
-               \vadorc{06} & Nate & Usually used by Nate. But might be free to use for us too. Ask jsr if unsure. \\ \hline
+               \thead{Instancename} & \thead{Responsibility} & \thead{Note} \\ \hline
+               \makecell{\vadorc{02} \\ \vadorc{05} \\ \vadorc{06}} & Benjamin Schiborr & Usually free to use. If unsure you also may ask jsr \\ \hline
                \vadorc{07} & Team TS & \\ \hline
+               \vadorc{20} & Jochen Schreiber & \\ \hline
+               \vadorc{21} & Stefan Richter & \\ \hline
+               \vadorc{22} & Stefan Richter & \\ \hline
+               \vadorc{23} & Florian Zink & \\ \hline
+               \vadorc{30} & Team Index & \\ \hline
+               \vadorc{31} & Team OnPremise & \\ \hline
+               \vadorc{32} & Team Axcelerate & \\ \hline
+               \vadorc{42} & Team DevOps Automation & \\ \hline
              \end{tabular}
              \label{tab:p03:ch01:overview_orch_servers}
            \end{table}
+
+Note: Usually the orchestration servers are stopped. If you need to use an orchestration server you need to login to the \awsc{} and start the server.
 	\section{Working with the orchestration server}
              \subsection{Login to the orchestration server}
              Before we come to the filesystem layout and how we setup the orchestration server to be operational and start working we need to login to the orchestration server. To to so we need to use one of our jump hosts as the orchestration servers themselves are not accessible from outside. To be able to login into a jump host you have to have a working 2FA setup for your personal use.
@@ -79,9 +91,9 @@ root@vadorc05 ... (git)-[your_branch] >
            \end{minted}
 	
 	\section{Creating a \pod{}}
-	We assume that our working directory is \mintinline{shell}{/srv/orchestration} and that we're \rootuser{} and that the server is free to use. If we know the software version we want to deploy the only thing left is to specify how the \pod{} is going look like, i.e. which servers and how many of them we want to instantiate. To specify this there is a yaml-configuration file which lists each server type we want to instantiate and how many of those servers we want to have.
+	We assume that our working directory is \mintinline{shell}{/srv/orchestration} and that we're \rootuser{} and that the server is free to use. If we know the software version we want to deploy the only thing left is to specify how the \pod{} is going to look like, i.e. which servers and how many of them we want to instantiate. To specify this there is a yaml-configuration file which lists each server type we want to instantiate and how many of those servers we want to have.
 	
-	There are planty of those files. But to keep it simple and as long as we cannot just specify an own file (which is in progress at the present time) we just need to edit \mintinline{shell}{/srv/orchestration/puppet/environments/development/hiera/06_size/small.yaml} an example of the is given in listing \ref{lst:p03:ch01:orchestration}
+	There are planty of those files. But to keep it simple and as long as we cannot just specify an own file (which is in progress at the present time) we just need to edit \mintinline{shell}{/srv/orchestration/puppet/environments/development/hiera/06_size/small.yaml} an example of such a file is given in listing \ref{lst:p03:ch01:orchestration}
 	\begin{listing}[H]
 		\caption{A sample pod instance description}
 		\label{lst:p03:ch01:orchestration}
@@ -93,7 +105,7 @@ root@vadorc05 ... (git)-[your_branch] >
          \caption{Available instance types}
          \begin{tabular}{| l | l | l |}
            \hline
-           \textbf{Instance type} & \textbf{Remark} \\ \hline
+           \thead{Instance type} & \thead{Remark} \\ \hline
            master & The master service instance. Platform: Windows \\ \hline
            batch\_asg & A batch auto scaling instance \\ \hline
            crawler & A Windows based crawler instance \\ \hline
@@ -130,7 +142,7 @@ root@vadorc05 ... (git)-[releases/5_10] > orchestration create
          \caption{\aws{} Environment parameters}
          \begin{tabular}{| l | l |}
            \hline
-           \textbf{Paramter name} & \textbf{Remark} \\ \hline
+           \thead{Paramter name} & \thead{Remark} \\ \hline
            development & \\ \hline
            staging & Technically this is a production environment \\ \hline
            production & \\ \hline
@@ -142,7 +154,7 @@ root@vadorc05 ... (git)-[releases/5_10] > orchestration create
          \caption{\aws{} Account numbers}
          \begin{tabular}{| l | l | l |}
            \hline
-           \textbf{Account number} & \textbf{Target} & \textbf{Domain to use to login into instances} \\ \hline
+           \thead{Account number} & \thead{Target} & \thead{Domain to use to login into instances} \\ \hline
            710991980648 & Development account  & rmdevcloud2.int \\ \hline
            569599628740 & Production account &  rmcloud; needs 2FA\\ \hline
          \end{tabular}
