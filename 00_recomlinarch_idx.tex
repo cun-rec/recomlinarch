@@ -9,6 +9,7 @@
 % Don't forget to read the KOMA-Script documentation, scrguien.pdf
 
 \usepackage[utf8]{inputenc}
+%\usepackage[T1]{fontenc}
 
 \setcounter{secnumdepth}{4}
 
@@ -23,6 +24,14 @@
 
 % listings
 \usepackage{minted}
+
+\usepackage{hyperref}
+\hypersetup{
+	pdftitle		= {Recommind Linux Architecture Documentation}
+	pdfsubject	= {Documentation of the Linux/AWS build to deployment technologies}
+	pdfauthor		= {Team Index}
+	pdfkeywords	=
+}
 
 \newcommand\relativepath{}
 \newcommand\relative[1]{\relativepath#1}
