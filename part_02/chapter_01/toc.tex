@@ -1,6 +1,30 @@
 \chapter{\pod{} Testing}\label{p03:ch02:pod_testing}
 	\section{\axceleratepod{} changes}
+	The \axceleratepod{} repository contains the implementation of the orchestration feature set, i.e. everything which is needed to manage pods (creating, extending, upgrading, migrating, terminating, etc. pp.). It also contains the part of our docker deployment infrastructure which is responsible to create every configuration needed by the docker host as well as the engine/app container and batch asg instances. Here we do not go into detail on the repositories layout but how to test changes of the repository.
+	
+		\subsection{Creating a new \axceleratepod{} version}
+		For the sake of example lets assume we have some changes on some templates of the userdata and we want to do some testing that those changes are correctly reflected in the deployment process, i.e. using the orchestration process to create or modify a \pod{}. Lets furthermore assume we made our changes in some branch $B$ and we just pushed the changes.
+		
+		Before we can reference the \axceleratepod{} version based on $B$ we first need to create a new version of \axceleratepod{}. In this step the \axceleratepod{} version based on $B$ will be build, zipped and uploaded to S3 such that the orchestration server has access to it and hence is able to use it as the underlying implementation of the changed orchestration feature set.
+		
+		To do we open up the webpage
+		\begin{center}
+			http://rm-jenkins/job/create_pod_version_default/
+		\end{center}
+		perform a login using our credentials and navigate to \emph{Build with Parameters} side using the same titled navigation link to the left. Fill in $B$ for the textfield to the right of the \emph{branch} label and keep the other options as is. Hit the \emph{Build} button and wait until the \axceleratepod{} creation has been done. You can repeat those steps as often as you need it. For instance if you do need to change more on your branch. The concrete \axceleratepod{} version is labeled
+		\begin{center}
+			$B$-$N$
+		\end{center}
+		where $N$ is a build number which is increased on each \axceleratepod{} creation you perform.
+		
+		\subsection{Using the new \axceleratepod{} version}
+		Now as we created a new \axceleratepod{} version we can use it in our orchestration steps. For the details on how to work with the orchestration server please refer to section \ref{p03:ch01:working_with_orch_servers}. In every sub-command of the orchestration script which supports the \mintinline{-version} option (like \mintinline{create}) we can now pass $B$ as \axceleratepod{} version to use. Note that we do not specify the build version here. As default the latest version of $B$ is being used by the orchestration tool. If we want to use a specific version $N$ we can tell the tool so by specifying $N$ using the command line option \mintinline{--minor_version N}. Anything done by the orchestration steps will now be based on the \axceleratepod{} version $B$-$N$.
 	\section{Bootloader changes}
+	Sometimes we need to test changes to the bootloader as well. There are two standard scenarios here: changes to the bootloader phases regarding the docker host and the once which reside within the deployed docker container. 
+		\subsection{Docker host specific changes}
+		The easiest to test are bootloader changes to phases which resides in the docker host bootloader installation. For such changes a \emph{hotfix} mechanism has been implemented which works as follows: The userdata script on a Linux host looks at some predefined location for a custom bootloader. If such a bootloader could be found it is downloaded and the bootloader already installed on the Linux host will be replaced by the userdata with the new bootloader just before the bootloader is executed.
+		\subsection{CG/NG specific changes}
+		\subsection{Special handling of changes for batch asg}
 	\section{CG changes}
 		\subsection{Promote new docker images using jenkins}
 		\subsection{Push docker images manually}
